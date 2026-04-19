@@ -1,4 +1,5 @@
 ﻿using NetworkMonitor.Backend;
+using NetworkMonitor.Backend.ProtocolAnalyzers;
 using SharpPcap;
 using PacketDotNet;
 using System.Net;
@@ -14,13 +15,16 @@ public class MainController
     private static readonly object packetLock = new();
 
     private static List<string> packets = new();
+    private static List<EnhancedPacketInfo> enhancedPackets = new();
     private static List<string> alerts = new();
+    private static List<SecurityAlert> securityAlerts = new();
 
     private static Dictionary<string, List<DateTime>> packetFrequency = new();
     private static Dictionary<string, HashSet<int>> portTracking = new();
     private static Dictionary<string, int> synTracking = new();
     private static Dictionary<string, int> icmpTracking = new();
     private static Dictionary<string, DateTime> lastAlertTime = new();
+    private static PacketStatistics statistics = new();
 
     private const int SYN_FLOOD_THRESHOLD = 200;
     private const int PORT_SCAN_THRESHOLD = 30;
@@ -50,12 +54,15 @@ public class MainController
         lock (packetLock)
         {
             packets.Clear();
+            enhancedPackets.Clear();
             alerts.Clear();
+            securityAlerts.Clear();
             packetFrequency.Clear();
             portTracking.Clear();
             synTracking.Clear();
             icmpTracking.Clear();
             lastAlertTime.Clear();
+            statistics = new PacketStatistics { LastUpdate = DateTime.Now };
         }
     }
 
@@ -70,13 +77,25 @@ public class MainController
 
         lock (packetLock)
         {
-            model.TotalPacketsCaptured = packets.Count;
+            model.TotalPacketsCaptured = enhancedPackets.Count;
 
+            // Legacy packet display for compatibility
             model.Packets = packets.Any()
-                ? packets.ToList() // Show all packets (up to the configured limit)
+                ? packets.ToList()
                 : new List<string> { device != null ? "🔄 Waiting for network packets..." : "❌ No device selected" };
 
+            // Enhanced packet information
+            model.EnhancedPackets = enhancedPackets.TakeLast(100).ToList();
+
+            // Legacy alerts
             model.Alerts = alerts.TakeLast(20).ToList();
+
+            // Enhanced security alerts
+            model.SecurityAlerts = securityAlerts.TakeLast(50).ToList();
+
+            // Update statistics
+            UpdateStatistics();
+            model.Statistics = statistics;
         }
 
         return model;
@@ -164,16 +183,45 @@ public class MainController
             var dst = ip.DestinationAddress.ToString();
             var proto = ip.Protocol.ToString();
 
-            if (IsPrivateIP(src) || IsPrivateIP(dst)) return;
-
             lock (packetLock)
             {
-                TrackFrequency(src);
+                // Enhanced packet analysis first
+                var analysisResult = ProtocolAnalyzer.AnalyzePacket(packet, ip);
+                
+                // Skip private IP traffic for public internet analysis only
+                // Still analyze private traffic for internal threats
+                bool isPrivateTraffic = IsPrivateIP(src) || IsPrivateIP(dst);
+                if (isPrivateTraffic)
+                {
+                    analysisResult.Metadata["TrafficType"] = "Internal";
+                }
+                else
+                {
+                    analysisResult.Metadata["TrafficType"] = "External";
+                    // Legacy packet tracking for external traffic
+                    TrackFrequency(src);
+                    HandleTcp(packet, src);
+                    HandleUdp(packet, src);
+                    HandleIcmp(packet, src);
+                }
+                
+                var enhancedPacket = new EnhancedPacketInfo
+                {
+                    Timestamp = DateTime.Now,
+                    SourceIP = src,
+                    DestinationIP = dst,
+                    Protocol = analysisResult.Protocol,
+                    Size = packet.Bytes.Length,
+                    Details = analysisResult.Details,
+                    RiskScore = analysisResult.RiskScore,
+                    SecurityFlags = analysisResult.SecurityFlags,
+                    Metadata = analysisResult.Metadata,
+                    FormattedDisplay = FormatEnhancedPacketDisplay(analysisResult, src, dst, packet.Bytes.Length)
+                };
 
-                HandleTcp(packet, src);
-                HandleUdp(packet, src);
-                HandleIcmp(packet, src);
+                enhancedPackets.Add(enhancedPacket);
 
+                // Legacy packet display for compatibility
                 var httpInfo = HandleHttp(packet);
                 var len = packet.Bytes.Length;
 
@@ -182,11 +230,24 @@ public class MainController
                 else
                     packets.Add($"{DateTime.Now:HH:mm:ss} | {proto} | {src} → {dst} | {len} bytes");
 
+                // Generate security alerts based on analysis
+                ProcessSecurityFlags(enhancedPacket);
+
+                // Maintain size limits
+                if (enhancedPackets.Count > AppConfig.Instance.MaxPackets)
+                    enhancedPackets.RemoveAt(0);
+
                 if (packets.Count > AppConfig.Instance.MaxPackets)
                     packets.RemoveAt(0);
+
+                if (securityAlerts.Count > AppConfig.Instance.MaxAlerts)
+                    securityAlerts.RemoveAt(0);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Packet analysis error: {ex.Message}");
+        }
     }
 
     private static bool IsPrivateIP(string ip)
@@ -396,7 +457,115 @@ public class MainController
         lock (packetLock)
         {
             packets.Clear();
+            enhancedPackets.Clear();
         }
+    }
+
+    // New helper methods for enhanced packet analysis
+    private static string FormatEnhancedPacketDisplay(ProtocolAnalysisResult analysis, string src, string dst, int size)
+    {
+        var riskIndicator = analysis.RiskScore switch
+        {
+            >= 50 => "🔴",
+            >= 25 => "🟡",
+            >= 10 => "🟠",
+            _ => "🟢"
+        };
+
+        var flagsDisplay = analysis.SecurityFlags.Any() ? 
+            $" | ⚠️ {string.Join(", ", analysis.SecurityFlags.Take(2))}" : "";
+
+        return $"{DateTime.Now:HH:mm:ss} | {riskIndicator} {analysis.Protocol} | {src} → {dst} | {analysis.Details} | {size} bytes{flagsDisplay}";
+    }
+
+    private static void ProcessSecurityFlags(EnhancedPacketInfo packet)
+    {
+        if (packet.SecurityFlags.Any() || packet.RiskScore >= 25)
+        {
+            var severity = CalculateSeverity(packet.RiskScore, packet.SecurityFlags);
+            
+            var alert = new SecurityAlert
+            {
+                Timestamp = packet.Timestamp,
+                AlertType = DetermineAlertType(packet.SecurityFlags, packet.Protocol),
+                Description = $"{packet.Protocol}: {string.Join(", ", packet.SecurityFlags.Take(3))}",
+                SourceIP = packet.SourceIP,
+                DestinationIP = packet.DestinationIP,
+                Severity = severity,
+                Context = new Dictionary<string, object>
+                {
+                    ["RiskScore"] = packet.RiskScore,
+                    ["Protocol"] = packet.Protocol,
+                    ["PacketSize"] = packet.Size,
+                    ["SecurityFlags"] = packet.SecurityFlags
+                }
+            };
+
+            securityAlerts.Add(alert);
+
+            // Also add to legacy alerts for compatibility
+            if (severity >= 7)
+            {
+                AddAlertOnce($"🚨 High Risk: {alert.Description}", packet.SourceIP);
+            }
+            else if (severity >= 5)
+            {
+                AddAlertOnce($"⚠️ Medium Risk: {alert.Description}", packet.SourceIP);
+            }
+        }
+    }
+
+    private static int CalculateSeverity(int riskScore, List<string> flags)
+    {
+        var severity = Math.Min(10, Math.Max(1, riskScore / 10));
+        
+        // Adjust based on specific flags
+        if (flags.Any(f => f.Contains("SSL") || f.Contains("TLS") || f.Contains("certificate")))
+            severity = Math.Min(10, severity + 2);
+        
+        if (flags.Any(f => f.Contains("injection") || f.Contains("XSS")))
+            severity = Math.Min(10, severity + 3);
+            
+        return severity;
+    }
+
+    private static string DetermineAlertType(List<string> flags, string protocol)
+    {
+        if (flags.Any(f => f.Contains("certificate") || f.Contains("SSL") || f.Contains("TLS")))
+            return "Certificate/Encryption";
+        
+        if (flags.Any(f => f.Contains("injection") || f.Contains("XSS")))
+            return "Code Injection";
+            
+        if (flags.Any(f => f.Contains("suspicious") || f.Contains("malicious")))
+            return "Malicious Activity";
+            
+        if (flags.Any(f => f.Contains("flood") || f.Contains("scan")))
+            return "Network Attack";
+            
+        return $"{protocol} Security";
+    }
+
+    private static void UpdateStatistics()
+    {
+        statistics.TotalPackets = enhancedPackets.Count;
+        statistics.HighRiskPackets = enhancedPackets.Count(p => p.RiskScore >= 50);
+        statistics.MediumRiskPackets = enhancedPackets.Count(p => p.RiskScore >= 25 && p.RiskScore < 50);
+        statistics.LowRiskPackets = enhancedPackets.Count(p => p.RiskScore < 25);
+        
+        statistics.ProtocolCounts = enhancedPackets
+            .GroupBy(p => p.Protocol)
+            .ToDictionary(g => g.Key, g => g.Count());
+            
+        statistics.SecurityFlagCounts = enhancedPackets
+            .SelectMany(p => p.SecurityFlags)
+            .GroupBy(f => f)
+            .ToDictionary(g => g.Key, g => g.Count());
+            
+        statistics.AverageRiskScore = enhancedPackets.Any() ? 
+            enhancedPackets.Average(p => p.RiskScore) : 0;
+            
+        statistics.LastUpdate = DateTime.Now;
     }
 
     //Saves a count of packets to a file. Uses CSV or .txt

@@ -1,53 +1,200 @@
-## Easy Packet Grabber / Network Monitor
+## Advanced Packet Scanner with Deep Packet Inspection (DPI)
 ### Overview
 ```
-Easy Packet Grabber is a network monitoring and security analysis tool written in C# using the .NET framework. The application captures live network traffic from a selected network interface and analyzes packets in real time to detect suspicious activity such as:
+Advanced Packet Scanner is a comprehensive network monitoring and security analysis tool written in C# using the .NET 8 framework. The application captures live network traffic from a selected network interface and performs advanced Deep Packet Inspection (DPI) to analyze packets in real time, detecting suspicious activity and providing detailed protocol analysis.
 
--ICMP flooding
+Key Features:
+- Deep Packet Inspection (DPI) with protocol-specific analyzers
+- SSL/TLS certificate analysis and validation
+- HTTP headers, cookies, and user agent extraction
+- DNS security analysis with tunneling detection
+- DHCP security monitoring
+- FTP and SMTP protocol analysis
+- Advanced payload content analysis and filtering
+- Real-time security risk scoring
+- Enhanced threat detection and alerting
 
--TCP SYN flooding
-
--UDP flooding
-
--Port scanning behavior
-
-The goal of the project is to demonstrate how packet sniffing, traffic analysis, and security monitoring can be implemented in a lightweight desktop application.
-```
-### Features
-```
-Network Packet Capture
-Captures real-time network traffic using a packet capture driver.
-
-Traffic Monitoring Dashboard
-Displays captured packets including:
-
-Source IP
-Destination IP
-Protocol
-Packet size
-Timestamp
-Intrusion Detection
-
-Detects abnormal traffic patterns such as:
-SYN floods
-UDP floods
-ICMP floods
-Port scanning
-Alerts System
-Flags suspicious traffic and logs alerts inside the Alerts page.
+The goal of the project is to demonstrate advanced packet analysis, traffic inspection, and security monitoring in a comprehensive desktop application.
 ```
 
-## Simplified File Structure
+### Enhanced Features
+```
+🔍 Deep Packet Inspection (DPI)
+- Protocol-specific parsers for HTTP, HTTPS, DNS, DHCP, FTP, SMTP
+- SSL/TLS certificate validation and security analysis
+- Payload content analysis with malware signature detection
+- Advanced pattern recognition for suspicious activities
+
+🛡️ Security Analysis
+- Real-time risk scoring (0-100 scale)
+- SSL/TLS security assessment (certificate validation, cipher analysis)
+- DNS security (tunneling detection, DGA identification, suspicious domains)
+- HTTP security analysis (header validation, XSS detection, injection patterns)
+- DHCP rogue server detection
+- Email security analysis (phishing patterns, suspicious attachments)
+
+📊 Enhanced Monitoring Dashboard
+- Real-time security metrics and risk assessment
+- Protocol breakdown with security flags
+- Advanced packet filtering and analysis
+- Security alert classification and severity scoring
+- Detailed packet metadata and forensic information
+
+🚨 Advanced Threat Detection
+- Man-in-the-middle attack indicators
+- Certificate-based attacks (expired, self-signed, suspicious CAs)
+- DNS poisoning and tunneling attempts
+- Command injection and XSS payload detection
+- Credit card and PII data exposure alerts
+- Behavioral analysis for zero-day detection
+```
+
+### Technical Enhancements
+```
+Protocol Analyzers:
+✅ HTTP/HTTPS - Headers, cookies, user agents, security headers analysis
+✅ SSL/TLS - Certificate validation, cipher assessment, vulnerability detection  
+✅ DNS - Query analysis, tunneling detection, DGA identification
+✅ DHCP - Rogue server detection, suspicious configuration analysis
+✅ FTP - Command analysis, suspicious file transfer detection
+✅ SMTP - Email security analysis, phishing pattern detection
+✅ Generic Payload - Content analysis, malware signatures, encoding detection
+
+Security Features:
+✅ Real-time risk scoring with threat classification
+✅ Certificate chain validation and security assessment
+✅ Advanced pattern matching for attack signatures
+✅ Behavioral analysis for anomaly detection
+✅ Comprehensive security alerting system
+✅ Forensic data collection and analysis
+```
+
+## Enhanced File Structure
 
 ```
-Easy-Packet-Grabber/
+Advanced-Packet-Scanner/
 ├── Backend/
-│   ├── AppConfig.cs         # Application configuration
-│   ├── DataModel.cs         # Data structures and models
-│   └── MainController.cs    # Main controller logic
+│   ├── AppConfig.cs              # Enhanced configuration management
+│   ├── DataModel.cs              # Enhanced data models with security metrics
+│   ├── MainController.cs         # Enhanced main controller with DPI integration
+│   └── ProtocolAnalyzers/        # Deep Packet Inspection analyzers
+│       ├── ProtocolAnalyzer.cs   # Main protocol analysis coordinator
+│       ├── HttpAnalyzer.cs       # HTTP/HTTPS deep analysis
+│       ├── SslTlsAnalyzer.cs     # SSL/TLS certificate and security analysis
+│       ├── DnsAnalyzer.cs        # DNS security and tunneling analysis
+│       ├── DhcpAnalyzer.cs       # DHCP security analysis
+│       ├── FtpSmtpAnalyzer.cs    # FTP and SMTP protocol analysis
+│       └── PayloadAnalyzer.cs    # Generic payload content analysis
 ├── UI/
-│   ├── AlertsPage.cs        # Alerts interface
-│   ├── BasePage.cs          # Base UI class
+│   ├── AlertsPage.cs             # Enhanced alerts with security classification
+│   ├── BasePage.cs               # Base UI functionality
+│   ├── DashboardPage.cs          # Enhanced dashboard with security metrics
+│   ├── MainForm.cs               # Enhanced main form
+│   └── OptionsPage.cs            # Enhanced configuration options
+├── NetworkMonitor.csproj         # Enhanced project dependencies
+├── Program.cs                    # Application entry point
+├── README.md                     # This enhanced documentation
+└── config.json                   # Enhanced configuration file
+```
+
+### Security Capabilities
+
+```
+🔒 SSL/TLS Security Analysis:
+- Certificate chain validation and trust assessment
+- Cipher suite security evaluation
+- TLS version compliance checking
+- Certificate expiration and validity monitoring
+- Self-signed certificate detection
+- Certificate authority trust validation
+
+🌐 DNS Security Monitoring:
+- DNS tunneling detection and analysis
+- Domain Generation Algorithm (DGA) identification
+- Suspicious domain pattern recognition
+- DNS poisoning attempt detection
+- Query frequency analysis for C&C detection
+
+📧 Email Security Analysis:
+- SMTP security assessment
+- Phishing pattern detection
+- Suspicious attachment identification
+- Email header analysis and validation
+- Sender reputation assessment
+
+🔍 Advanced Payload Analysis:
+- Malware signature detection
+- Command injection pattern recognition
+- XSS and SQL injection detection
+- Credit card and PII exposure alerts
+- Encoded payload detection and analysis
+- File type identification and security assessment
+```
+
+### Installation and Setup
+
+```
+Prerequisites:
+- .NET 8.0 Runtime or later
+- Npcap packet capture driver (https://npcap.org/)
+- Administrator privileges (required for packet capture)
+
+Enhanced Dependencies:
+- SharpPcap 6.3.1+ (packet capture library)
+- System.Security.Cryptography.X509Certificates (certificate analysis)
+- System.Text.Json 8.0+ (enhanced JSON processing)
+
+Build Instructions:
+1. Clone the repository
+2. Install Npcap with WinPcap API-compatible mode
+3. Open project in Visual Studio 2022 or use dotnet CLI
+4. Build and run as Administrator
+```
+
+### Enhanced Usage Guide
+
+```
+🚀 Getting Started:
+1. Run the application as Administrator
+2. Select network adapter from the dropdown
+3. Start packet capture to begin DPI analysis
+4. Monitor real-time security metrics and alerts
+5. Review detailed packet analysis with risk scoring
+
+🔧 Advanced Configuration:
+- Adjust risk scoring thresholds in AppConfig.cs
+- Configure security alert severity levels
+- Customize protocol analysis parameters
+- Set packet retention and analysis limits
+
+📊 Security Dashboard:
+- Real-time risk score monitoring
+- Protocol distribution analysis  
+- Security flag frequency tracking
+- High-risk packet identification
+- Forensic data collection and export
+```
+
+### Security Considerations
+
+```
+⚠️ Important Security Notes:
+- Always run with minimal necessary privileges
+- Regularly update Npcap drivers for security patches
+- Monitor for false positives in security analysis
+- Validate certificate analysis results independently
+- Use in compliance with applicable laws and regulations
+- Implement proper data handling for sensitive information
+
+🛡️ Defensive Measures:
+- Built-in protection against analysis evasion
+- Robust error handling for malformed packets
+- Secure storage of captured security data
+- Protection against packet injection attacks
+- Comprehensive logging for audit trails
+```
+
+This enhanced packet scanner now provides enterprise-level Deep Packet Inspection capabilities with comprehensive security analysis, making it suitable for advanced network security monitoring and forensic analysis.
 │   ├── DashboardPage.cs     # Dashboard interface
 │   ├── MainForm.cs          # Main form window
 │   └── OptionsPage.cs       # Settings and options

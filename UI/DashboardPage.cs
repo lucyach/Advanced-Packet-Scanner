@@ -256,6 +256,92 @@ public class DashboardPage : BasePage
                 Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
 
+            // Security Metrics GroupBox
+            var securityMetricsGroupBox = new GroupBox
+            {
+                Text = "🛡️ Security Metrics",
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Location = new Point(30, 380),
+                Size = new Size(_contentPanel.Width - 60, 120),
+                ForeColor = Color.FromArgb(239, 68, 68),
+                BackColor = Color.FromArgb(30, 41, 59),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+
+            // Risk Score Display
+            var riskScoreLabel = new Label
+            {
+                Text = "Avg Risk Score:",
+                Location = new Point(20, 30),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(148, 163, 184)
+            };
+
+            var riskScoreValue = new Label
+            {
+                Name = "riskScoreValue",
+                Text = "0.0",
+                Location = new Point(140, 25),
+                Size = new Size(60, 30),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.FromArgb(34, 197, 94),
+                BackColor = Color.FromArgb(45, 55, 72),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            // High Risk Packets
+            var highRiskLabel = new Label
+            {
+                Text = "High Risk:",
+                Location = new Point(220, 30),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(148, 163, 184)
+            };
+
+            var highRiskValue = new Label
+            {
+                Name = "highRiskValue",
+                Text = "0",
+                Location = new Point(290, 25),
+                Size = new Size(50, 30),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.FromArgb(239, 68, 68),
+                BackColor = Color.FromArgb(45, 55, 72),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            // Protocol Breakdown
+            var protocolBreakdownLabel = new Label
+            {
+                Text = "Top Protocols:",
+                Location = new Point(20, 70),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(148, 163, 184)
+            };
+
+            var protocolBreakdownValue = new Label
+            {
+                Name = "protocolBreakdownValue",
+                Text = "No data",
+                Location = new Point(120, 70),
+                Size = new Size(400, 20),
+                Font = new Font("Segoe UI", 9, FontStyle.Regular),
+                ForeColor = Color.FromArgb(209, 213, 219),
+                AutoEllipsis = true
+            };
+
+            securityMetricsGroupBox.Controls.Add(riskScoreLabel);
+            securityMetricsGroupBox.Controls.Add(riskScoreValue);
+            securityMetricsGroupBox.Controls.Add(highRiskLabel);
+            securityMetricsGroupBox.Controls.Add(highRiskValue);
+            securityMetricsGroupBox.Controls.Add(protocolBreakdownLabel);
+            securityMetricsGroupBox.Controls.Add(protocolBreakdownValue);
+
             // Add labels to system info group box
             _systemInfoGroupBox.Controls.Add(_messageLabel);
             _systemInfoGroupBox.Controls.Add(_adapterComboBox);
@@ -268,13 +354,13 @@ public class DashboardPage : BasePage
             _systemInfoGroupBox.Controls.Add(packetRateTextLabel);
             _systemInfoGroupBox.Controls.Add(_packetRateLabel);
             
-            // Packets GroupBox
+            // Packets GroupBox - moved down to accommodate security metrics
             _packetsGroupBox = new GroupBox
             {
-                Text = "🔴 Live Network Packets (Streaming)",
+                Text = "🔴 Enhanced Packet Analysis (Deep Packet Inspection)",
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                Location = new Point(30, 410),
-                Size = new Size(_contentPanel.Width - 60, _contentPanel.Height - 520),
+                Location = new Point(30, 520),
+                Size = new Size(_contentPanel.Width - 60, _contentPanel.Height - 630),
                 MinimumSize = new Size(400, 150),
                 AutoSize = false,
                 ForeColor = Color.FromArgb(148, 163, 184),
@@ -313,25 +399,33 @@ public class DashboardPage : BasePage
             _packetsDataGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
             _packetsDataGrid.EnableHeadersVisualStyles = false;
             
-            // Add columns
+            // Add columns for enhanced packet information
             _packetsDataGrid.Columns.Add("Timestamp", "Time");
+            _packetsDataGrid.Columns.Add("Risk", "Risk");
             _packetsDataGrid.Columns.Add("Protocol", "Protocol");
             _packetsDataGrid.Columns.Add("Source", "Source");
             _packetsDataGrid.Columns.Add("Destination", "Destination");
+            _packetsDataGrid.Columns.Add("Details", "Details");
             _packetsDataGrid.Columns.Add("Size", "Size");
-            _packetsDataGrid.Columns.Add("Alert", "⚠");
+            _packetsDataGrid.Columns.Add("Flags", "Security Flags");
             
-            // Configure column properties
-            _packetsDataGrid.Columns["Timestamp"].FillWeight = 18f;
-            _packetsDataGrid.Columns["Protocol"].FillWeight = 12f;
-            _packetsDataGrid.Columns["Source"].FillWeight = 25f;
-            _packetsDataGrid.Columns["Destination"].FillWeight = 25f;
-            _packetsDataGrid.Columns["Size"].FillWeight = 12f;
-            _packetsDataGrid.Columns["Alert"].FillWeight = 8f;
+            // Configure column properties for enhanced display
+            _packetsDataGrid.Columns["Timestamp"].FillWeight = 12f;
+            _packetsDataGrid.Columns["Risk"].FillWeight = 8f;
+            _packetsDataGrid.Columns["Protocol"].FillWeight = 10f;
+            _packetsDataGrid.Columns["Source"].FillWeight = 18f;
+            _packetsDataGrid.Columns["Destination"].FillWeight = 18f;
+            _packetsDataGrid.Columns["Details"].FillWeight = 25f;
+            _packetsDataGrid.Columns["Size"].FillWeight = 8f;
+            _packetsDataGrid.Columns["Flags"].FillWeight = 20f;
             
-            // Configure alert column appearance
-            _packetsDataGrid.Columns["Alert"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            _packetsDataGrid.Columns["Alert"].DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            // Configure risk column appearance
+            _packetsDataGrid.Columns["Risk"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            _packetsDataGrid.Columns["Risk"].DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            
+            // Configure flags column appearance
+            _packetsDataGrid.Columns["Flags"].DefaultCellStyle.Font = new Font("Segoe UI", 8, FontStyle.Regular);
+            _packetsDataGrid.Columns["Flags"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             
             // Set alternating row colors for better readability
             _packetsDataGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(20, 28, 47);
@@ -464,6 +558,7 @@ public class DashboardPage : BasePage
             
             // Add controls to content panel
             _contentPanel?.Controls.Add(_systemInfoGroupBox);
+            _contentPanel?.Controls.Add(securityMetricsGroupBox);
             _contentPanel?.Controls.Add(_packetsGroupBox);
             _contentPanel?.Controls.Add(_statusLabel);
         }
@@ -518,47 +613,18 @@ public class DashboardPage : BasePage
                 _lastUpdateTime = now;
             }
             
-            // Smart packet table updates - only update if there are new packets
-            if (data.Packets.Any() && (_packetsDataGrid.Rows.Count == 0 || HasNewPackets(data.Packets)))
+            // Smart packet table updates - prioritize enhanced packets if available
+            if (data.EnhancedPackets.Any())
             {
-                // Store current scroll position
-                bool wasAtBottom = false;
-                if (_packetsDataGrid.Rows.Count > 0)
-                {
-                    var lastVisibleRow = _packetsDataGrid.FirstDisplayedScrollingRowIndex + _packetsDataGrid.DisplayedRowCount(false) - 1;
-                    wasAtBottom = lastVisibleRow >= _packetsDataGrid.Rows.Count - 1;
-                }
-                
-                // Clear and update packets table
-                _packetsDataGrid.Rows.Clear();
-                foreach (var packet in data.Packets)
-                {
-                    var parsedPacket = ParsePacketString(packet);
-                    _packetsDataGrid.Rows.Add(parsedPacket.Timestamp, parsedPacket.Protocol, 
-                                            parsedPacket.Source, parsedPacket.Destination, 
-                                            parsedPacket.Size, parsedPacket.AlertStatus);
-                    
-                    // Color code protocol column
-                    var lastRowIndex = _packetsDataGrid.Rows.Count - 1;
-                    var protocolCell = _packetsDataGrid.Rows[lastRowIndex].Cells["Protocol"];
-                    protocolCell.Style.ForeColor = GetProtocolColor(parsedPacket.Protocol);
-                    protocolCell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                    
-                    // Color code alert column
-                    var alertCell = _packetsDataGrid.Rows[lastRowIndex].Cells["Alert"];
-                    if (!string.IsNullOrEmpty(parsedPacket.AlertStatus) && parsedPacket.AlertStatus != "-")
-                    {
-                        alertCell.Style.ForeColor = parsedPacket.AlertStatus.Contains("🚨") ? 
-                            Color.FromArgb(239, 68, 68) : Color.FromArgb(245, 158, 11);
-                    }
-                }
-                
-                // Auto-scroll to bottom if user was already at bottom (streaming behavior)
-                if (wasAtBottom && _packetsDataGrid.Rows.Count > 0)
-                {
-                    _packetsDataGrid.FirstDisplayedScrollingRowIndex = Math.Max(0, _packetsDataGrid.Rows.Count - _packetsDataGrid.DisplayedRowCount(false));
-                }
+                UpdateEnhancedPacketDisplay(data);
             }
+            else if (data.Packets.Any() && (_packetsDataGrid.Rows.Count == 0 || HasNewPackets(data.Packets)))
+            {
+                UpdateLegacyPacketDisplay(data);
+            }
+
+            // Update security metrics
+            UpdateSecurityMetrics(data);
             
             // Update status with more detailed information
             if (_statusLabel != null)
@@ -567,7 +633,7 @@ public class DashboardPage : BasePage
                     MainController.AvailableDevices[_adapterComboBox.SelectedIndex].Description : "No adapter selected";
                 var statusColor = data.Message.Contains("Monitoring") ? Color.FromArgb(34, 197, 94) : Color.FromArgb(239, 68, 68);
                 _statusLabel.ForeColor = statusColor;
-                _statusLabel.Text = $"🔄 Live Updates • Last: {DateTime.Now:HH:mm:ss.fff} • Rows: {_packetsDataGrid.Rows.Count} • {data.Message}";
+                _statusLabel.Text = $"🔄 Enhanced DPI Active • Last: {DateTime.Now:HH:mm:ss.fff} • Packets: {_packetsDataGrid.Rows.Count} • {data.Message}";
             }
         }
         catch (Exception ex)
@@ -578,6 +644,176 @@ public class DashboardPage : BasePage
                 _statusLabel.Text = $"❌ Error: {ex.Message}";
             }
         }
+    }
+
+    private void UpdateEnhancedPacketDisplay(DataModel data)
+    {
+        if (_packetsDataGrid == null) return;
+
+        // Store current scroll position
+        bool wasAtBottom = false;
+        if (_packetsDataGrid.Rows.Count > 0)
+        {
+            var lastVisibleRow = _packetsDataGrid.FirstDisplayedScrollingRowIndex + _packetsDataGrid.DisplayedRowCount(false) - 1;
+            wasAtBottom = lastVisibleRow >= _packetsDataGrid.Rows.Count - 1;
+        }
+
+        // Clear and update with enhanced packet information
+        _packetsDataGrid.Rows.Clear();
+        foreach (var packet in data.EnhancedPackets.TakeLast(100))
+        {
+            var riskIcon = GetRiskIcon(packet.RiskScore);
+            var flagsDisplay = string.Join(", ", packet.SecurityFlags.Take(2));
+            if (packet.SecurityFlags.Count > 2)
+                flagsDisplay += $" (+{packet.SecurityFlags.Count - 2} more)";
+
+            _packetsDataGrid.Rows.Add(
+                packet.Timestamp.ToString("HH:mm:ss.fff"),
+                riskIcon,
+                packet.Protocol,
+                packet.SourceIP,
+                packet.DestinationIP,
+                TruncateString(packet.Details, 50),
+                packet.Size.ToString(),
+                flagsDisplay
+            );
+
+            // Apply enhanced styling
+            var lastRowIndex = _packetsDataGrid.Rows.Count - 1;
+            var row = _packetsDataGrid.Rows[lastRowIndex];
+
+            // Color code risk level
+            var riskCell = row.Cells["Risk"];
+            riskCell.Style.ForeColor = GetRiskColor(packet.RiskScore);
+            riskCell.Style.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+
+            // Color code protocol
+            var protocolCell = row.Cells["Protocol"];
+            protocolCell.Style.ForeColor = GetProtocolColor(packet.Protocol);
+            protocolCell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+
+            // Color code security flags
+            var flagsCell = row.Cells["Flags"];
+            if (packet.SecurityFlags.Any())
+            {
+                flagsCell.Style.ForeColor = packet.RiskScore >= 50 ? 
+                    Color.FromArgb(239, 68, 68) : Color.FromArgb(245, 158, 11);
+            }
+
+            // Highlight high-risk rows
+            if (packet.RiskScore >= 50)
+            {
+                row.DefaultCellStyle.BackColor = Color.FromArgb(40, 20, 20);
+            }
+            else if (packet.RiskScore >= 25)
+            {
+                row.DefaultCellStyle.BackColor = Color.FromArgb(40, 35, 20);
+            }
+        }
+
+        // Auto-scroll to bottom if user was already at bottom
+        if (wasAtBottom && _packetsDataGrid.Rows.Count > 0)
+        {
+            _packetsDataGrid.FirstDisplayedScrollingRowIndex = Math.Max(0, _packetsDataGrid.Rows.Count - _packetsDataGrid.DisplayedRowCount(false));
+        }
+    }
+
+    private void UpdateLegacyPacketDisplay(DataModel data)
+    {
+        // Fallback to legacy packet display for compatibility
+        _packetsDataGrid.Rows.Clear();
+        foreach (var packet in data.Packets)
+        {
+            var parsedPacket = ParsePacketString(packet);
+            _packetsDataGrid.Rows.Add(
+                parsedPacket.Timestamp, 
+                "🟢", // Default low risk for legacy packets
+                parsedPacket.Protocol, 
+                parsedPacket.Source, 
+                parsedPacket.Destination, 
+                parsedPacket.Protocol, // Use protocol as details for legacy
+                parsedPacket.Size, 
+                parsedPacket.AlertStatus == "-" ? "" : parsedPacket.AlertStatus
+            );
+        }
+    }
+
+    private void UpdateSecurityMetrics(DataModel data)
+    {
+        if (data.Statistics == null) return;
+
+        var stats = data.Statistics;
+        
+        // Update risk score display
+        var riskScoreControl = FindControlByName(_systemInfoGroupBox?.Parent, "riskScoreValue") as Label;
+        if (riskScoreControl != null)
+        {
+            riskScoreControl.Text = stats.AverageRiskScore.ToString("F1");
+            riskScoreControl.ForeColor = GetRiskColor((int)stats.AverageRiskScore);
+        }
+
+        // Update high risk count
+        var highRiskControl = FindControlByName(_systemInfoGroupBox?.Parent, "highRiskValue") as Label;
+        if (highRiskControl != null)
+        {
+            highRiskControl.Text = stats.HighRiskPackets.ToString();
+        }
+
+        // Update protocol breakdown
+        var protocolControl = FindControlByName(_systemInfoGroupBox?.Parent, "protocolBreakdownValue") as Label;
+        if (protocolControl != null && stats.ProtocolCounts.Any())
+        {
+            var topProtocols = stats.ProtocolCounts
+                .OrderByDescending(kvp => kvp.Value)
+                .Take(4)
+                .Select(kvp => $"{kvp.Key}({kvp.Value})")
+                .ToArray();
+            protocolControl.Text = string.Join(", ", topProtocols);
+        }
+    }
+
+    private Control? FindControlByName(Control? parent, string name)
+    {
+        if (parent == null) return null;
+        
+        foreach (Control control in parent.Controls)
+        {
+            if (control.Name == name) return control;
+            var found = FindControlByName(control, name);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    private string GetRiskIcon(int riskScore)
+    {
+        return riskScore switch
+        {
+            >= 75 => "🔴",
+            >= 50 => "🟠",
+            >= 25 => "🟡",
+            >= 10 => "🔵",
+            _ => "🟢"
+        };
+    }
+
+    private Color GetRiskColor(int riskScore)
+    {
+        return riskScore switch
+        {
+            >= 75 => Color.FromArgb(220, 38, 38),
+            >= 50 => Color.FromArgb(234, 88, 12),
+            >= 25 => Color.FromArgb(245, 158, 11),
+            >= 10 => Color.FromArgb(59, 130, 246),
+            _ => Color.FromArgb(34, 197, 94)
+        };
+    }
+
+    private string TruncateString(string input, int maxLength)
+    {
+        if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
+            return input ?? "";
+        return input.Substring(0, maxLength) + "...";
     }
     
     private bool HasNewPackets(List<string> newPackets)
