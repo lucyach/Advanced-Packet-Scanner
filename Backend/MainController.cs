@@ -1,0 +1,460 @@
+﻿using NetworkMonitor.Backend;
+using SharpPcap;
+using PacketDotNet;
+using System.Net;
+using System;
+using System.Linq;
+using System.Collections.Generic;
+
+namespace NetworkMonitor.Backend;
+
+public class MainController
+{
+    private static ICaptureDevice? device = null;
+    private static readonly object packetLock = new();
+
+    private static List<string> packets = new();
+    private static List<string> alerts = new();
+
+    private static Dictionary<string, List<DateTime>> packetFrequency = new();
+    private static Dictionary<string, HashSet<int>> portTracking = new();
+    private static Dictionary<string, int> synTracking = new();
+    private static Dictionary<string, int> icmpTracking = new();
+    private static Dictionary<string, DateTime> lastAlertTime = new();
+
+    private const int SYN_FLOOD_THRESHOLD = 200;
+    private const int PORT_SCAN_THRESHOLD = 30;
+    private const int ICMP_FLOOD_THRESHOLD = 150;
+    private const int UDP_FLOOD_THRESHOLD = 400;
+
+    private static readonly TimeSpan WINDOW = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan ALERT_COOLDOWN = TimeSpan.FromSeconds(15);
+
+    public static List<ICaptureDevice> AvailableDevices { get; private set; } = new();
+    public static ICaptureDevice? CurrentDevice => device;
+
+    static MainController()
+    {
+        try
+        {
+            ListDevices();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error listing devices: {ex.Message}");
+        }
+    }
+
+    private static void ResetData()
+    {
+        lock (packetLock)
+        {
+            packets.Clear();
+            alerts.Clear();
+            packetFrequency.Clear();
+            portTracking.Clear();
+            synTracking.Clear();
+            icmpTracking.Clear();
+            lastAlertTime.Clear();
+        }
+    }
+
+    public DataModel GetDashboardData()
+    {
+        var model = new DataModel
+        {
+            Message = device != null ? $"Monitoring: {device.Description}" : "No device selected",
+            CurrentTime = DateTime.Now.ToString("HH:mm:ss"),
+            ComputerName = Environment.MachineName
+        };
+
+        lock (packetLock)
+        {
+            model.TotalPacketsCaptured = packets.Count;
+
+            model.Packets = packets.Any()
+                ? packets.ToList() // Show all packets (up to the configured limit)
+                : new List<string> { device != null ? "🔄 Waiting for network packets..." : "❌ No device selected" };
+
+            model.Alerts = alerts.TakeLast(20).ToList();
+        }
+
+        return model;
+    }
+
+    public static void ListDevices()
+    {
+        AvailableDevices = CaptureDeviceList.Instance.Cast<ICaptureDevice>().ToList();
+
+        if (!AvailableDevices.Any())
+            Console.WriteLine("No network adapters found. Ensure Npcap is installed and run as admin.");
+    }
+
+    public static bool StartCapture(ICaptureDevice selectedDevice)
+    {
+        try
+        {
+            // Only reset data if switching to a different device
+            if (device != selectedDevice)
+            {
+                device?.StopCapture();
+                device?.Close();
+
+                ResetData();
+            }
+            else if (device != null)
+            {
+                // Already capturing on this device, no need to restart
+                return true;
+            }
+
+            device = selectedDevice;
+            device.OnPacketArrival += OnPacketArrival;
+
+            device.Open(DeviceModes.Promiscuous, 1000);
+            device.StartCapture();
+
+            Console.WriteLine($"Started capture on: {device.Description}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to start capture: {ex.Message}");
+            device = null;
+            return false;
+        }
+    }
+
+    public static void PauseCapture()
+    {
+        try
+        {
+            device?.StopCapture();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error pausing capture: {ex.Message}");
+        }
+    }
+
+    public static void PlayCapture()
+    {
+        try
+        {
+            device?.StartCapture();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resuming capture: {ex.Message}");
+        }
+    }
+
+    private static void OnPacketArrival(object sender, PacketCapture e)
+    {
+        try
+        {
+            var raw = e.GetPacket();
+            if (raw == null) return;
+
+            var packet = Packet.ParsePacket(raw.LinkLayerType, raw.Data);
+            var ip = packet.Extract<IPPacket>();
+            if (ip == null) return;
+
+            var src = ip.SourceAddress.ToString();
+            var dst = ip.DestinationAddress.ToString();
+            var proto = ip.Protocol.ToString();
+
+            if (IsPrivateIP(src) || IsPrivateIP(dst)) return;
+
+            lock (packetLock)
+            {
+                TrackFrequency(src);
+
+                HandleTcp(packet, src);
+                HandleUdp(packet, src);
+                HandleIcmp(packet, src);
+
+                var httpInfo = HandleHttp(packet);
+                var len = packet.Bytes.Length;
+
+                if (httpInfo != null)
+                    packets.Add($"{DateTime.Now:HH:mm:ss} | HTTP | {src} → {dst} | {httpInfo} | {len} bytes");
+                else
+                    packets.Add($"{DateTime.Now:HH:mm:ss} | {proto} | {src} → {dst} | {len} bytes");
+
+                if (packets.Count > AppConfig.Instance.MaxPackets)
+                    packets.RemoveAt(0);
+            }
+        }
+        catch { }
+    }
+
+    private static bool IsPrivateIP(string ip)
+    {
+        if (!IPAddress.TryParse(ip, out var address))
+            return false;
+
+        byte[] bytes = address.GetAddressBytes();
+
+        return bytes[0] switch
+        {
+            10 => true,
+            172 => bytes[1] >= 16 && bytes[1] <= 31,
+            192 => bytes[1] == 168,
+            _ => false
+        };
+    }
+
+    private static void TrackFrequency(string src)
+    {
+        var now = DateTime.Now;
+
+        if (!packetFrequency.ContainsKey(src))
+            packetFrequency[src] = new List<DateTime>();
+
+        packetFrequency[src].Add(now);
+
+        packetFrequency[src] = packetFrequency[src]
+            .Where(t => t > now - WINDOW)
+            .ToList();
+    }
+
+    private static void HandleTcp(Packet packet, string src)
+    {
+        var tcp = packet.Extract<TcpPacket>();
+        if (tcp == null) return;
+
+        if (!portTracking.ContainsKey(src))
+            portTracking[src] = new HashSet<int>();
+
+        portTracking[src].Add(tcp.DestinationPort);
+
+        if (tcp.Synchronize && !tcp.Acknowledgment)
+        {
+            if (!synTracking.ContainsKey(src))
+                synTracking[src] = 0;
+
+            synTracking[src]++;
+
+            if (synTracking[src] > SYN_FLOOD_THRESHOLD)
+                AddAlertOnce($"🚨 SYN Flood detected from {src}", src);
+        }
+
+        if (portTracking[src].Count > PORT_SCAN_THRESHOLD)
+            AddAlertOnce($"⚠ Port scan detected from {src}", src);
+    }
+
+    private static void HandleUdp(Packet packet, string src)
+    {
+        var udp = packet.Extract<UdpPacket>();
+        if (udp == null) return;
+
+        if (packetFrequency[src].Count > UDP_FLOOD_THRESHOLD)
+            AddAlertOnce($"🚨 UDP Flood suspected from {src}", src);
+    }
+
+    private static void HandleIcmp(Packet packet, string src)
+    {
+        var icmp = packet.Extract<IcmpV4Packet>();
+        if (icmp == null) return;
+
+        if (icmp.TypeCode == IcmpV4TypeCode.EchoRequest)
+        {
+            if (!icmpTracking.ContainsKey(src))
+                icmpTracking[src] = 0;
+
+            icmpTracking[src]++;
+
+            if (icmpTracking[src] > ICMP_FLOOD_THRESHOLD)
+                AddAlertOnce($"⚠ ICMP Flood detected from {src}", src);
+        }
+    }
+
+    private static string? HandleHttp(Packet packet)
+    {
+        var tcp = packet.Extract<TcpPacket>();
+        if (tcp == null) return null;
+
+        if (tcp.PayloadData == null || tcp.PayloadData.Length == 0)
+            return null;
+
+        if (tcp.SourcePort != 80 && tcp.DestinationPort != 80)
+            return null;
+
+        try
+        {
+            var payload = System.Text.Encoding.ASCII.GetString(tcp.PayloadData);
+            var lines = payload.Split("\r\n");
+
+            if (lines.Length == 0)
+                return null;
+
+            var firstLine = lines[0];
+            string host = "";
+
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("Host:"))
+                {
+                    host = line.Replace("Host:", "").Trim();
+                    break;
+                }
+            }
+
+            if (firstLine.StartsWith("GET") || firstLine.StartsWith("POST") ||
+                firstLine.StartsWith("PUT") || firstLine.StartsWith("DELETE"))
+            {
+                var parts = firstLine.Split(' ');
+                if (parts.Length >= 2)
+                {
+                    var method = parts[0];
+                    var url = parts[1];
+
+                    if (!string.IsNullOrEmpty(host))
+                        return $"{method} {url} | Host: {host}";
+                    else
+                        return $"{method} {url}";
+                }
+            }
+
+            if (firstLine.StartsWith("HTTP/"))
+            {
+                var parts = firstLine.Split(' ');
+                if (parts.Length >= 2)
+                    return $"Status {parts[1]}";
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    private static void AddAlertOnce(string message, string key)
+    {
+        var now = DateTime.Now;
+
+        if (lastAlertTime.ContainsKey(key) &&
+            (now - lastAlertTime[key]) < ALERT_COOLDOWN)
+            return;
+
+        lastAlertTime[key] = now;
+
+        if (alerts.Count > AppConfig.Instance.MaxAlerts)
+            alerts.RemoveAt(0);
+
+        alerts.Add($"[{now:HH:mm:ss}] {message}");
+    }
+
+    // Additional methods for enhanced alert management
+    public static List<string> GetAllAlerts()
+    {
+        lock (packetLock)
+        {
+            return new List<string>(alerts);
+        }
+    }
+
+    public static int GetAlertCount()
+    {
+        lock (packetLock)
+        {
+            return alerts.Count;
+        }
+    }
+
+    public static Dictionary<string, int> GetAlertStats()
+    {
+        lock (packetLock)
+        {
+            var stats = new Dictionary<string, int>
+            {
+                ["SYN Flood"] = alerts.Count(a => a.Contains("SYN Flood")),
+                ["Port Scan"] = alerts.Count(a => a.Contains("Port scan")),
+                ["UDP Flood"] = alerts.Count(a => a.Contains("UDP Flood")),
+                ["ICMP Flood"] = alerts.Count(a => a.Contains("ICMP Flood")),
+                ["Total"] = alerts.Count
+            };
+            return stats;
+        }
+    }
+
+    public static void ClearAlerts()
+    {
+        lock (packetLock)
+        {
+            alerts.Clear();
+            // Also clear tracking data to reset threat detection counters
+            synTracking.Clear();
+            icmpTracking.Clear();
+            lastAlertTime.Clear();
+            // Note: We keep portTracking and packetFrequency as they're used for ongoing detection
+        }
+    }
+
+    public static void ClearPackets()
+    {
+        lock (packetLock)
+        {
+            packets.Clear();
+        }
+    }
+
+    //Saves a count of packets to a file. Uses CSV or .txt
+    public static bool SaveLastPacketsToFile(int count, string? filePath, bool csv)
+    {
+        if (count <= 0) 
+            return false;
+        //get downloads folder as default if filepath is null
+        if (string.IsNullOrEmpty(filePath))
+        {
+            var userpath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var downloads = Path.Combine(userpath, "Downloads");
+            var defaultname = "default";
+            if (csv == true) defaultname = "Saved_packets.csv";
+            else defaultname = "Saved_packets.txt";
+            filePath = Path.Combine(downloads, defaultname);
+                
+        }
+        List<string> packetsToSave;
+        lock (packetLock)
+        {
+            int start = Math.Max(0, packets.Count - count);
+            packetsToSave = [.. packets.Skip(start)];
+        }
+        try
+        {
+            var TruePath = Path.GetFullPath(filePath);
+            if (TruePath == null)
+            {
+                Console.WriteLine("Invalid file path.");
+                return false;
+            }
+            var directoryofTruePath = Path.GetDirectoryName(TruePath);
+            if (directoryofTruePath == null || !Directory.Exists(directoryofTruePath))
+            {
+                Console.WriteLine("Directory does not exist.");
+                return false;
+            }
+
+            Directory.CreateDirectory(directoryofTruePath);
+
+            //If its not a csv, save as a .txt file
+
+            if (!csv)
+            {
+                File.WriteAllLines(TruePath, packetsToSave);
+            }
+            else
+            {
+                //Save as a CSV file
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving packets to file: {ex.Message}");
+            return false;
+        }
+
+    }
+}
