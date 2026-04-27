@@ -1,20 +1,46 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkMonitor", "NetworkMonitor.csproj", "{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkMonitor.Api", "NetworkMonitor.Api\NetworkMonitor.Api.csproj", "{0D19FAF2-0397-4190-B481-365BF6521844}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Debug|x64.Build.0 = Debug|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Debug|x86.Build.0 = Debug|Any CPU
 		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Release|x64.ActiveCfg = Release|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Release|x64.Build.0 = Release|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Release|x86.ActiveCfg = Release|Any CPU
+		{215BFB63-EFEC-F0B9-1E4E-9607292D5FD1}.Release|x86.Build.0 = Release|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Debug|x64.Build.0 = Debug|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Debug|x86.Build.0 = Debug|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Release|x64.ActiveCfg = Release|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Release|x64.Build.0 = Release|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Release|x86.ActiveCfg = Release|Any CPU
+		{0D19FAF2-0397-4190-B481-365BF6521844}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpPcap" Version="6.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Backend\AppConfig.cs" Link="Backend\AppConfig.cs" />
+    <Compile Include="..\Backend\DataModel.cs" Link="Backend\DataModel.cs" />
+    <Compile Include="..\Backend\MainController.cs" Link="Backend\MainController.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\DhcpAnalyzer.cs" Link="Backend\ProtocolAnalyzers\DhcpAnalyzer.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\DnsAnalyzer.cs" Link="Backend\ProtocolAnalyzers\DnsAnalyzer.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\FtpSmtpAnalyzer.cs" Link="Backend\ProtocolAnalyzers\FtpSmtpAnalyzer.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\HttpAnalyzer.cs" Link="Backend\ProtocolAnalyzers\HttpAnalyzer.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\PayloadAnalyzer.cs" Link="Backend\ProtocolAnalyzers\PayloadAnalyzer.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\ProtocolAnalyzer.cs" Link="Backend\ProtocolAnalyzers\ProtocolAnalyzer.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\SslTlsAnalyzer.cs" Link="Backend\ProtocolAnalyzers\SslTlsAnalyzer.cs" />
+  </ItemGroup>
+
+</Project>
