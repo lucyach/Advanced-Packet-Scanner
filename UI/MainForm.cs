@@ -49,8 +49,8 @@ public partial class MainForm : Form
         this.AutoSize = false;
 
         // Set a very large size
-        this.Size = new Size(1400, 1000);
-        this.MinimumSize = new Size(1200, 800);
+        this.Size = new Size(1600, 1050);
+        this.MinimumSize = new Size(1300, 850);
 
         // Create Sidebar Panel
         _sidebarPanel = new Panel

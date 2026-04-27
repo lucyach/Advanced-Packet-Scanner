@@ -70,9 +70,9 @@ public class DashboardPage : BasePage
             {
                 Text = "System Information",
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                Location = new Point(30, 90),
-                Size = new Size(_contentPanel.Width - 60, 280),
-                MinimumSize = new Size(400, 280),
+                Location = new Point(30, 68),
+                Size = new Size(_contentPanel.Width - 60, 200),
+                MinimumSize = new Size(400, 200),
                 AutoSize = false,
                 ForeColor = Color.FromArgb(148, 163, 184),
                 BackColor = Color.FromArgb(30, 41, 59),
@@ -83,7 +83,7 @@ public class DashboardPage : BasePage
             _messageLabel = new Label
             {
                 Text = "Network Adapter:",
-                Location = new Point(20, 40),
+                Location = new Point(20, 38),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(148, 163, 184),
@@ -93,8 +93,8 @@ public class DashboardPage : BasePage
             
             _adapterComboBox = new ComboBox
             {
-                Location = new Point(280, 37),
-                Size = new Size(400, 30),
+                Location = new Point(180, 35),
+                Size = new Size(500, 30),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 BackColor = Color.FromArgb(45, 55, 72),
                 ForeColor = Color.FromArgb(240, 240, 240),
@@ -160,10 +160,10 @@ public class DashboardPage : BasePage
             _timeValueLabel = new Label
             {
                 Text = data.CurrentTime,
-                Location = new Point(110, 90),
+                Location = new Point(80, 85),
                 AutoSize = true,
-                MinimumSize = new Size(150, 50),
-                MaximumSize = new Size(500, 50),
+                MinimumSize = new Size(180, 40),
+                MaximumSize = new Size(220, 40),
                 AutoEllipsis = true,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(239, 68, 68),
@@ -176,7 +176,7 @@ public class DashboardPage : BasePage
             _computerLabel = new Label
             {
                 Text = "Computer:",
-                Location = new Point(20, 170),
+                Location = new Point(350, 90),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(148, 163, 184),
@@ -187,10 +187,10 @@ public class DashboardPage : BasePage
             _computerValueLabel = new Label
             {
                 Text = data.ComputerName,
-                Location = new Point(180, 160),
+                Location = new Point(460, 85),
                 AutoSize = true,
-                MinimumSize = new Size(150, 50),
-                MaximumSize = new Size(600, 50),
+                MinimumSize = new Size(200, 40),
+                MaximumSize = new Size(400, 40),
                 AutoEllipsis = true,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(59, 130, 246),
@@ -204,7 +204,7 @@ public class DashboardPage : BasePage
             var packetCountLabel = new Label
             {
                 Text = "Packets Captured:",
-                Location = new Point(20, 220),
+                Location = new Point(20, 145),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(148, 163, 184),
@@ -215,10 +215,10 @@ public class DashboardPage : BasePage
             _packetCountLabel = new Label
             {
                 Text = "0",
-                Location = new Point(270, 210),
+                Location = new Point(190, 140),
                 AutoSize = true,
-                MinimumSize = new Size(100, 50),
-                MaximumSize = new Size(200, 50),
+                MinimumSize = new Size(120, 40),
+                MaximumSize = new Size(180, 40),
                 AutoEllipsis = true,
                 Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Color.FromArgb(34, 197, 94),
@@ -232,7 +232,7 @@ public class DashboardPage : BasePage
             var packetRateTextLabel = new Label
             {
                 Text = "Rate (pkt/sec):",
-                Location = new Point(400, 220),
+                Location = new Point(380, 145),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(148, 163, 184),
@@ -243,10 +243,10 @@ public class DashboardPage : BasePage
             _packetRateLabel = new Label
             {
                 Text = "0.0",
-                Location = new Point(610, 210),
+                Location = new Point(520, 140),
                 AutoSize = true,
-                MinimumSize = new Size(80, 50),
-                MaximumSize = new Size(150, 50),
+                MinimumSize = new Size(100, 40),
+                MaximumSize = new Size(150, 40),
                 AutoEllipsis = true,
                 Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Color.FromArgb(239, 68, 68),
@@ -260,9 +260,9 @@ public class DashboardPage : BasePage
             var securityMetricsGroupBox = new GroupBox
             {
                 Text = "🛡️ Security Metrics",
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                Location = new Point(30, 380),
-                Size = new Size(_contentPanel.Width - 60, 120),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Location = new Point(30, 282),
+                Size = new Size(_contentPanel.Width - 60, 180),
                 ForeColor = Color.FromArgb(239, 68, 68),
                 BackColor = Color.FromArgb(30, 41, 59),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -271,10 +271,10 @@ public class DashboardPage : BasePage
             // Risk Score Display
             var riskScoreLabel = new Label
             {
-                Text = "Avg Risk Score:",
-                Location = new Point(20, 30),
+                Text = "Average Risk Score:",
+                Location = new Point(25, 40),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Color.FromArgb(148, 163, 184)
             };
 
@@ -282,9 +282,9 @@ public class DashboardPage : BasePage
             {
                 Name = "riskScoreValue",
                 Text = "0.0",
-                Location = new Point(140, 25),
-                Size = new Size(60, 30),
-                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Location = new Point(220, 35),
+                Size = new Size(90, 40),
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.FromArgb(34, 197, 94),
                 BackColor = Color.FromArgb(45, 55, 72),
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -294,10 +294,10 @@ public class DashboardPage : BasePage
             // High Risk Packets
             var highRiskLabel = new Label
             {
-                Text = "High Risk:",
-                Location = new Point(220, 30),
+                Text = "High Risk Packets:",
+                Location = new Point(360, 40),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Color.FromArgb(148, 163, 184)
             };
 
@@ -305,22 +305,22 @@ public class DashboardPage : BasePage
             {
                 Name = "highRiskValue",
                 Text = "0",
-                Location = new Point(290, 25),
-                Size = new Size(50, 30),
-                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Location = new Point(545, 35),
+                Size = new Size(80, 40),
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.FromArgb(239, 68, 68),
                 BackColor = Color.FromArgb(45, 55, 72),
                 TextAlign = ContentAlignment.MiddleCenter,
                 BorderStyle = BorderStyle.FixedSingle
             };
 
-            // Protocol Breakdown
+            // Protocol Breakdown - second row
             var protocolBreakdownLabel = new Label
             {
                 Text = "Top Protocols:",
-                Location = new Point(20, 70),
+                Location = new Point(25, 100),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Color.FromArgb(148, 163, 184)
             };
 
@@ -328,9 +328,9 @@ public class DashboardPage : BasePage
             {
                 Name = "protocolBreakdownValue",
                 Text = "No data",
-                Location = new Point(120, 70),
-                Size = new Size(400, 20),
-                Font = new Font("Segoe UI", 9, FontStyle.Regular),
+                Location = new Point(170, 100),
+                Size = new Size(700, 30),
+                Font = new Font("Segoe UI", 10, FontStyle.Regular),
                 ForeColor = Color.FromArgb(209, 213, 219),
                 AutoEllipsis = true
             };
@@ -357,11 +357,11 @@ public class DashboardPage : BasePage
             // Packets GroupBox - moved down to accommodate security metrics
             _packetsGroupBox = new GroupBox
             {
-                Text = "🔴 Enhanced Packet Analysis (Deep Packet Inspection)",
+                Text = "Enhanced Packet Analysis",
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                Location = new Point(30, 520),
-                Size = new Size(_contentPanel.Width - 60, _contentPanel.Height - 630),
-                MinimumSize = new Size(400, 150),
+                Location = new Point(30, 476),
+                Size = new Size(_contentPanel.Width - 60, _contentPanel.Height - 510),
+                MinimumSize = new Size(400, 200),
                 AutoSize = false,
                 ForeColor = Color.FromArgb(148, 163, 184),
                 BackColor = Color.FromArgb(30, 41, 59),
@@ -370,8 +370,8 @@ public class DashboardPage : BasePage
             
             _packetsDataGrid = new DataGridView
             {
-                Location = new Point(15, 45),
-                Size = new Size(_packetsGroupBox.Width - 30, _packetsGroupBox.Height - 50),
+                Location = new Point(15, 48),
+                Size = new Size(_packetsGroupBox.Width - 30, _packetsGroupBox.Height - 55),
                 Font = new Font("Segoe UI", 9, FontStyle.Regular),
                 BackgroundColor = Color.FromArgb(15, 23, 42),
                 ForeColor = Color.FromArgb(209, 213, 219),
@@ -410,14 +410,14 @@ public class DashboardPage : BasePage
             _packetsDataGrid.Columns.Add("Flags", "Security Flags");
             
             // Configure column properties for enhanced display
-            _packetsDataGrid.Columns["Timestamp"].FillWeight = 12f;
-            _packetsDataGrid.Columns["Risk"].FillWeight = 8f;
+            _packetsDataGrid.Columns["Timestamp"].FillWeight = 10f;
+            _packetsDataGrid.Columns["Risk"].FillWeight = 5f;
             _packetsDataGrid.Columns["Protocol"].FillWeight = 10f;
-            _packetsDataGrid.Columns["Source"].FillWeight = 18f;
-            _packetsDataGrid.Columns["Destination"].FillWeight = 18f;
-            _packetsDataGrid.Columns["Details"].FillWeight = 25f;
-            _packetsDataGrid.Columns["Size"].FillWeight = 8f;
-            _packetsDataGrid.Columns["Flags"].FillWeight = 20f;
+            _packetsDataGrid.Columns["Source"].FillWeight = 17f;
+            _packetsDataGrid.Columns["Destination"].FillWeight = 17f;
+            _packetsDataGrid.Columns["Details"].FillWeight = 20f;
+            _packetsDataGrid.Columns["Size"].FillWeight = 6f;
+            _packetsDataGrid.Columns["Flags"].FillWeight = 15f;
             
             // Configure risk column appearance
             _packetsDataGrid.Columns["Risk"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -433,18 +433,20 @@ public class DashboardPage : BasePage
             // Create header panel with info icons positioned above DataGridView columns
             var headerPanel = new Panel
             {
-                Location = new Point(15, 35),
-                Size = new Size(_packetsGroupBox.Width - 30, 25),
+                Location = new Point(15, 25),
+                Size = new Size(_packetsGroupBox.Width - 30, 20),
                 BackColor = Color.Transparent,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
 
             // Calculate column positions based on DataGridView column widths  
-            int timeWidth = (int)(headerPanel.Width * 0.18f);
-            int protocolWidth = (int)(headerPanel.Width * 0.12f);
-            int sourceWidth = (int)(headerPanel.Width * 0.25f);
-            int destWidth = (int)(headerPanel.Width * 0.25f);
-            int sizeWidth = (int)(headerPanel.Width * 0.12f);
+            int timeWidth = (int)(headerPanel.Width * 0.101f);
+            int riskWidth = (int)(headerPanel.Width * 0.067f);
+            int protocolWidth = (int)(headerPanel.Width * 0.084f);
+            int sourceWidth = (int)(headerPanel.Width * 0.151f);
+            int destWidth = (int)(headerPanel.Width * 0.151f);
+            int detailsWidth = (int)(headerPanel.Width * 0.210f);
+            int sizeWidth = (int)(headerPanel.Width * 0.067f);
 
             // Add info icons positioned above each column
             var protocolInfoIcon = CreateInfoIcon(
@@ -453,22 +455,22 @@ public class DashboardPage : BasePage
                 "• UDP: User Datagram Protocol - fast, connectionless protocol without delivery confirmation. Used for streaming and gaming where speed is more important than reliability.\n\n" +
                 "• ICMP: Internet Control Message Protocol - used for network diagnostics and error messages.\n\n" +
                 "• HTTP: Hypertext Transfer Protocol - used for communication between browsers and servers for loading web pages.",
-                new Point(timeWidth + protocolWidth/2 - 10, 0)
+                new Point(timeWidth + riskWidth + protocolWidth/2 - 10, 0)
             );
 
             var sourceInfoIcon = CreateInfoIcon(
                 "Source: The source refers to the IP address of the original device that sent out the packet. Used to identify where the data originated from within the network.",
-                new Point(timeWidth + protocolWidth + sourceWidth/2 - 10, 0)
+                new Point(timeWidth + riskWidth + protocolWidth + sourceWidth/2 - 10, 0)
             );
 
             var destInfoIcon = CreateInfoIcon(
                 "Destination: The destination refers to the IP address of the device to which the packet was sent. Used to identify who the intended recipient of the data was.",
-                new Point(timeWidth + protocolWidth + sourceWidth + destWidth/2 - 10, 0)
+                new Point(timeWidth + riskWidth + protocolWidth + sourceWidth + destWidth/2 - 10, 0)
             );
 
             var sizeInfoIcon = CreateInfoIcon(
                 "Size: The size of the packet refers to the number of bytes of information the packet contains. A standard range is anywhere between 20 and 1500 bytes.",
-                new Point(timeWidth + protocolWidth + sourceWidth + destWidth + sizeWidth/2 - 10, 0)
+                new Point(timeWidth + riskWidth + protocolWidth + sourceWidth + destWidth + detailsWidth + sizeWidth/2 - 10, 0)
             );
 
             headerPanel.Controls.Add(protocolInfoIcon);
@@ -477,15 +479,15 @@ public class DashboardPage : BasePage
             headerPanel.Controls.Add(sizeInfoIcon);
 
             // Adjust DataGridView position to make room for header panel
-            _packetsDataGrid.Location = new Point(15, 65);
-            _packetsDataGrid.Size = new Size(_packetsGroupBox.Width - 30, _packetsGroupBox.Height - 70);
+            _packetsDataGrid.Location = new Point(15, 48);
+            _packetsDataGrid.Size = new Size(_packetsGroupBox.Width - 30, _packetsGroupBox.Height - 55);
 
             // Add Clear button for packets
             var clearButton = new Button
             {
                 Text = "Clear Packets",
-                Location = new Point(_packetsGroupBox.Width - 240, 0),
-                Size = new Size(100, 45),
+                Location = new Point(_packetsGroupBox.Width - 240, -1),
+                Size = new Size(105, 26),
                 BackColor = Color.FromArgb(239, 68, 68),
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
@@ -503,8 +505,8 @@ public class DashboardPage : BasePage
             var savePacketsButton = new Button
             {
                 Text = "Save Packets",
-                Location = new Point(_packetsGroupBox.Width - 130, 0),
-                Size = new Size(110, 45),
+                Location = new Point(_packetsGroupBox.Width - 125, -1),
+                Size = new Size(110, 26),
                 BackColor = Color.FromArgb(59, 130, 246),
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
@@ -546,7 +548,7 @@ public class DashboardPage : BasePage
             _statusLabel = new Label
             {
                 Text = $"Last updated: {DateTime.Now:HH:mm:ss}",
-                Location = new Point(30, _contentPanel.Height - 50),
+                Location = new Point(30, _contentPanel.Height - 30),
                 AutoSize = true,
                 MaximumSize = new Size(_contentPanel.Width - 60, 30),
                 AutoEllipsis = true,
