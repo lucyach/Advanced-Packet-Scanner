@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NetworkMonitor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d07db3c4b7c9a5c4480339c85831f4dfc8f4684c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4eb0251772847d4de4038f5724ae5f9ece4face8")]
 [assembly: System.Reflection.AssemblyProductAttribute("NetworkMonitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NetworkMonitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

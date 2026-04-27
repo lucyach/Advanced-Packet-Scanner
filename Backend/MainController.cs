@@ -101,6 +101,53 @@ public class MainController
         return model;
     }
 
+    public DataModel GetDashboardDataFiltered(string? protocol, int? minRisk, int? maxRisk, string? payloadContains)
+    {
+        var data = GetDashboardData();
+        var filtersApplied =
+            !string.IsNullOrWhiteSpace(protocol) ||
+            minRisk.HasValue ||
+            maxRisk.HasValue ||
+            !string.IsNullOrWhiteSpace(payloadContains);
+
+        // Preserve true packet totals/rate behavior when caller is not filtering.
+        if (!filtersApplied)
+        {
+            return data;
+        }
+
+        IEnumerable<EnhancedPacketInfo> filtered = data.EnhancedPackets;
+
+        if (!string.IsNullOrWhiteSpace(protocol))
+        {
+            filtered = filtered.Where(p => p.Protocol.Contains(protocol, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (minRisk.HasValue)
+        {
+            filtered = filtered.Where(p => p.RiskScore >= minRisk.Value);
+        }
+
+        if (maxRisk.HasValue)
+        {
+            filtered = filtered.Where(p => p.RiskScore <= maxRisk.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(payloadContains))
+        {
+            filtered = filtered.Where(p => PacketContainsValue(p, payloadContains));
+        }
+
+        var filteredPackets = filtered.ToList();
+        data.EnhancedPackets = filteredPackets;
+        data.TotalPacketsCaptured = filteredPackets.Count;
+        data.SecurityAlerts = data.SecurityAlerts
+            .Where(a => filteredPackets.Any(p => p.SourceIP == a.SourceIP && p.DestinationIP == a.DestinationIP))
+            .ToList();
+
+        return data;
+    }
+
     public static void ListDevices()
     {
         AvailableDevices = CaptureDeviceList.Instance.Cast<ICaptureDevice>().ToList();
@@ -566,6 +613,24 @@ public class MainController
             enhancedPackets.Average(p => p.RiskScore) : 0;
             
         statistics.LastUpdate = DateTime.Now;
+    }
+
+    private static bool PacketContainsValue(EnhancedPacketInfo packet, string value)
+    {
+        if (packet.Details.Contains(value, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (packet.SecurityFlags.Any(f => f.Contains(value, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        foreach (var item in packet.Metadata.Values)
+        {
+            var text = item?.ToString();
+            if (!string.IsNullOrWhiteSpace(text) && text.Contains(value, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     //Saves a count of packets to a file. Uses CSV or .txt

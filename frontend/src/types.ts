@@ -31,6 +31,7 @@ export type EnhancedPacket = {
   details: string;
   riskScore: number;
   securityFlags: string[];
+  metadata?: Record<string, unknown>;
 };
 
 export type DashboardData = {
@@ -47,6 +48,17 @@ export type Config = {
   maxPackets: number;
   maxAlerts: number;
   packetSaveCount: number;
+  payloadFilteringEnabled?: boolean;
+  payloadPreviewLength?: number;
+  blockedPayloadKeywords?: string[];
+  blockedPayloadPatterns?: string[];
+};
+
+export type DashboardFilters = {
+  protocol?: string;
+  minRisk?: number;
+  maxRisk?: number;
+  payloadContains?: string;
 };
 
 export type AlertsPayload = {

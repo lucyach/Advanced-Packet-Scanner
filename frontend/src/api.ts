@@ -1,4 +1,4 @@
-import type { AlertsPayload, Config, DashboardData, Device } from "./types";
+import type { AlertsPayload, Config, DashboardData, DashboardFilters, Device } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -23,7 +23,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getDashboard: () => request<DashboardData>("/api/dashboard"),
+  getDashboard: (filters?: DashboardFilters) => {
+    const params = new URLSearchParams();
+    if (filters?.protocol) params.set("protocol", filters.protocol);
+    if (filters?.minRisk !== undefined) params.set("minRisk", String(filters.minRisk));
+    if (filters?.maxRisk !== undefined) params.set("maxRisk", String(filters.maxRisk));
+    if (filters?.payloadContains) params.set("payloadContains", filters.payloadContains);
+
+    const query = params.toString();
+    return request<DashboardData>(query ? `/api/dashboard?${query}` : "/api/dashboard");
+  },
   getDevices: () => request<Device[]>("/api/devices"),
   startCapture: (deviceIndex: number) =>
     request<{ message: string }>("/api/capture/start", {

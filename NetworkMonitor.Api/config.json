@@ -1,0 +1,17 @@
+{
+  "MaxPackets": 500,
+  "MaxAlerts": 100,
+  "PacketSaveCount": 100,
+  "PayloadFilteringEnabled": true,
+  "PayloadPreviewLength": 200,
+  "BlockedPayloadKeywords": [
+    "password=",
+    "authorization:",
+    "token=",
+    "private_key"
+  ],
+  "BlockedPayloadPatterns": [
+    "(?i)bearer\\s\u002B[a-z0-9\\-_.]\u002B",
+    "(?i)api[_-]?key\\s*[=:]\\s*[a-z0-9\\-_.]\u002B"
+  ]
+}

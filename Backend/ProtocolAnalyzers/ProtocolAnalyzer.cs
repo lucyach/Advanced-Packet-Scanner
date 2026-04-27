@@ -4,6 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using NetworkMonitor.Backend;
 
 namespace NetworkMonitor.Backend.ProtocolAnalyzers;
 
@@ -76,9 +77,12 @@ public static class ProtocolAnalyzer
         switch (port)
         {
             case 80:
+            case 8080:
+            case 8000:
                 result = HttpAnalyzer.AnalyzeHttp(tcp, result);
                 break;
             case 443:
+            case 8443:
                 result = SslTlsAnalyzer.AnalyzeSslTls(tcp, result);
                 break;
             case 21:
@@ -87,6 +91,7 @@ public static class ProtocolAnalyzer
             case 25:
             case 587:
             case 465:
+            case 2525:
                 result = SmtpAnalyzer.AnalyzeSmtp(tcp, result);
                 break;
             case 53:
@@ -99,6 +104,11 @@ public static class ProtocolAnalyzer
                     result = PayloadAnalyzer.AnalyzeGenericPayload(tcp.PayloadData, result);
                 }
                 break;
+        }
+
+        if (tcp.PayloadData?.Length > 0)
+        {
+            result = PayloadAnalyzer.AnalyzePayloadWithFilters(tcp.PayloadData, result, BuildPayloadFilterOptions());
         }
     }
 
@@ -128,6 +138,11 @@ public static class ProtocolAnalyzer
                     result = PayloadAnalyzer.AnalyzeGenericPayload(udp.PayloadData, result);
                 }
                 break;
+        }
+
+        if (udp.PayloadData?.Length > 0)
+        {
+            result = PayloadAnalyzer.AnalyzePayloadWithFilters(udp.PayloadData, result, BuildPayloadFilterOptions());
         }
     }
 
@@ -159,5 +174,18 @@ public static class ProtocolAnalyzer
         if (tcp.Push) flags.Add("PSH");
         if (tcp.Urgent) flags.Add("URG");
         return string.Join(",", flags);
+    }
+
+    private static PayloadFilterOptions BuildPayloadFilterOptions()
+    {
+        var config = AppConfig.Instance;
+        return new PayloadFilterOptions
+        {
+            Enabled = config.PayloadFilteringEnabled,
+            CaseSensitive = false,
+            MaxPreviewLength = config.PayloadPreviewLength,
+            BlockedKeywords = config.BlockedPayloadKeywords.ToList(),
+            BlockedRegexPatterns = config.BlockedPayloadPatterns.ToList()
+        };
     }
 }

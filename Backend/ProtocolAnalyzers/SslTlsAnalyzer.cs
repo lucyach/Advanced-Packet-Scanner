@@ -235,6 +235,12 @@ public static class SslTlsAnalyzer
             result.Metadata["Thumbprint"] = cert.Thumbprint ?? "Unknown";
             result.Metadata["KeyAlgorithm"] = cert.PublicKey?.Oid?.FriendlyName ?? "Unknown";
             result.Metadata["KeySize"] = cert.PublicKey?.Key?.KeySize ?? 0;
+            result.Metadata["SignatureAlgorithm"] = cert.SignatureAlgorithm?.FriendlyName ?? "Unknown";
+            result.Metadata["DnsNames"] = ExtractDnsNames(cert);
+            result.Metadata["HasServerAuthenticationEku"] = HasServerAuthenticationEku(cert);
+            result.Metadata["IsCertificateAuthority"] = IsCertificateAuthority(cert);
+
+            ValidateCertificateChain(cert, result);
             
             // Security checks - expiration
             if (cert.NotAfter < DateTime.Now)
@@ -285,6 +291,83 @@ public static class SslTlsAnalyzer
             result.RiskScore += 15;
             result.SecurityFlags.Add($"Certificate analysis error: {ex.Message}");
         }
+    }
+
+    private static void ValidateCertificateChain(X509Certificate2 cert, ProtocolAnalysisResult result)
+    {
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+        chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+        chain.ChainPolicy.VerificationTime = DateTime.UtcNow;
+
+        var valid = chain.Build(cert);
+        result.Metadata["CertificateChainValid"] = valid;
+
+        if (!valid)
+        {
+            var issues = chain.ChainStatus
+                .Select(s => s.StatusInformation?.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Distinct()
+                .ToList();
+
+            result.Metadata["CertificateChainIssues"] = issues;
+            result.RiskScore += 25;
+            result.SecurityFlags.Add("Certificate chain validation failed");
+        }
+    }
+
+    private static List<string> ExtractDnsNames(X509Certificate2 cert)
+    {
+        var dnsNames = new List<string>();
+        foreach (var extension in cert.Extensions)
+        {
+            if (extension.Oid?.Value != "2.5.29.17")
+                continue;
+
+            var formatted = extension.Format(true);
+            var lines = formatted.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                const string marker = "DNS Name=";
+                var index = line.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                if (index >= 0)
+                {
+                    dnsNames.Add(line[(index + marker.Length)..].Trim());
+                }
+            }
+        }
+
+        return dnsNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static bool HasServerAuthenticationEku(X509Certificate2 cert)
+    {
+        foreach (var extension in cert.Extensions)
+        {
+            if (extension is not X509EnhancedKeyUsageExtension eku)
+                continue;
+
+            foreach (var oid in eku.EnhancedKeyUsages)
+            {
+                if (oid.Value == "1.3.6.1.5.5.7.3.1")
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsCertificateAuthority(X509Certificate2 cert)
+    {
+        foreach (var extension in cert.Extensions)
+        {
+            if (extension is X509BasicConstraintsExtension basic)
+                return basic.CertificateAuthority;
+        }
+
+        return false;
     }
 
     private static void AnalyzeAlert(byte[] payload, ProtocolAnalysisResult result)

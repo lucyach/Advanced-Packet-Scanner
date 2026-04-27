@@ -8,8 +8,8 @@ namespace NetworkMonitor.Api.Controllers;
 public class DashboardController(MainController controller) : ControllerBase
 {
     [HttpGet]
-    public ActionResult<DataModel> Get()
+    public ActionResult<DataModel> Get([FromQuery] string? protocol, [FromQuery] int? minRisk, [FromQuery] int? maxRisk, [FromQuery] string? payloadContains)
     {
-        return Ok(controller.GetDashboardData());
+        return Ok(controller.GetDashboardDataFiltered(protocol, minRisk, maxRisk, payloadContains));
     }
 }

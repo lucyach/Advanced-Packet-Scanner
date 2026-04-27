@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { api } from "./api";
-import type { AlertsPayload, Config, DashboardData, Device } from "./types";
+import type { AlertsPayload, Config, DashboardData, Device, EnhancedPacket } from "./types";
 
 type View = "dashboard" | "alerts" | "options";
 
@@ -39,6 +39,18 @@ function savePacketsAsCsv(dashboard: DashboardData) {
   URL.revokeObjectURL(url);
 }
 
+function formatMetadata(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "No metadata available";
+  }
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
 function App() {
   const [view, setView] = useState<View>("dashboard");
   const [devices, setDevices] = useState<Device[]>([]);
@@ -50,6 +62,7 @@ function App() {
   const [packetRate, setPacketRate] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState("");
   const [clearedPackets, setClearedPackets] = useState(false);
+  const [modalPacket, setModalPacket] = useState<EnhancedPacket | null>(null);
   const prevRef = useRef<{ count: number; time: number }>({ count: 0, time: Date.now() });
 
   async function loadBootstrap() {
@@ -262,17 +275,23 @@ function App() {
                       <th>Source</th>
                       <th>Destination</th>
                       <th style={{ width: 60 }}>Size</th>
+                      <th style={{ width: 260 }}>Details</th>
                       <th style={{ width: 36 }}>⚠</th>
                     </tr>
                   </thead>
                   <tbody>
                     {displayedPackets.map((pkt, i) => (
-                      <tr key={`${pkt.timestamp}-${pkt.sourceIP}-${i}`}>
+                      <tr
+                        key={`${pkt.timestamp}-${pkt.sourceIP}-${i}`}
+                        onClick={() => setModalPacket(pkt)}
+                        title="Click to inspect full analyzer output"
+                      >
                         <td>{new Date(pkt.timestamp).toLocaleTimeString("en-US", { hour12: false })}</td>
                         <td className={protoClass(pkt.protocol)}>{pkt.protocol}</td>
                         <td className="td-mono">{pkt.sourceIP}</td>
                         <td className="td-mono">{pkt.destinationIP}</td>
                         <td>{pkt.size}</td>
+                        <td>{pkt.details || "-"}</td>
                         <td>
                           {pkt.securityFlags.length > 0 || pkt.riskScore > 50 ? (
                             <span className="warn-icon" title={pkt.securityFlags.join(", ")}>⚠</span>
@@ -291,6 +310,38 @@ function App() {
                 {dashboard?.totalPacketsCaptured ?? 0} &bull; Monitoring: {currentDeviceName || "No device"}
               </div>
             </div>
+
+            {modalPacket ? (
+              <div className="packet-modal-backdrop">
+                <div className="packet-modal" role="dialog" aria-modal="true" aria-label="Packet analyzer details">
+                  <button
+                    className="packet-modal-close"
+                    onClick={() => setModalPacket(null)}
+                    aria-label="Close packet analyzer details"
+                  >
+                    ×
+                  </button>
+                  <div className="packet-details-title">Packet Analyzer Details</div>
+                  <div className="packet-details-meta">
+                    <span><strong>Protocol:</strong> {modalPacket.protocol}</span>
+                    <span><strong>Risk:</strong> {modalPacket.riskScore}</span>
+                    <span><strong>Size:</strong> {modalPacket.size} bytes</span>
+                    <span><strong>Source:</strong> {modalPacket.sourceIP}</span>
+                    <span><strong>Destination:</strong> {modalPacket.destinationIP}</span>
+                  </div>
+                  <div className="packet-details-line">
+                    <strong>Summary:</strong> {modalPacket.details || "No summary"}
+                  </div>
+                  <div className="packet-details-line">
+                    <strong>Security Flags:</strong>{" "}
+                    {modalPacket.securityFlags.length > 0
+                      ? modalPacket.securityFlags.join(" | ")
+                      : "None"}
+                  </div>
+                  <pre className="packet-metadata-json">{formatMetadata(modalPacket.metadata)}</pre>
+                </div>
+              </div>
+            ) : null}
           </>
         )}
 

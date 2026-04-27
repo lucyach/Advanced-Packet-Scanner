@@ -3,6 +3,16 @@ using System.Text.RegularExpressions;
 
 namespace NetworkMonitor.Backend.ProtocolAnalyzers;
 
+public class PayloadFilterOptions
+{
+    public bool Enabled { get; set; } = false;
+    public bool CaseSensitive { get; set; } = false;
+    public int MaxPreviewLength { get; set; } = 200;
+    public List<string> RequiredKeywords { get; set; } = new();
+    public List<string> BlockedKeywords { get; set; } = new();
+    public List<string> BlockedRegexPatterns { get; set; } = new();
+}
+
 public static class PayloadAnalyzer
 {
     private static readonly Regex UrlRegex = new(@"https?://[^\s<>""]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -12,6 +22,11 @@ public static class PayloadAnalyzer
     private static readonly Regex Base64Regex = new(@"^[A-Za-z0-9+/]*={0,2}$", RegexOptions.Compiled);
 
     public static ProtocolAnalysisResult AnalyzeGenericPayload(byte[] payload, ProtocolAnalysisResult result)
+    {
+        return AnalyzePayloadWithFilters(payload, result, null);
+    }
+
+    public static ProtocolAnalysisResult AnalyzePayloadWithFilters(byte[] payload, ProtocolAnalysisResult result, PayloadFilterOptions? filterOptions)
     {
         if (payload == null || payload.Length == 0)
             return result;
@@ -25,7 +40,8 @@ public static class PayloadAnalyzer
 
             if (isText)
             {
-                AnalyzeTextPayload(payload, result);
+                var textPayload = Encoding.UTF8.GetString(payload);
+                AnalyzeTextPayload(payload, result, textPayload, filterOptions);
             }
             else
             {
@@ -43,12 +59,12 @@ public static class PayloadAnalyzer
         return result;
     }
 
-    private static void AnalyzeTextPayload(byte[] payload, ProtocolAnalysisResult result)
+    private static void AnalyzeTextPayload(byte[] payload, ProtocolAnalysisResult result, string text, PayloadFilterOptions? filterOptions)
     {
         try
         {
-            var text = Encoding.UTF8.GetString(payload);
-            result.Metadata["PayloadPreview"] = TruncateString(text, 200);
+            var previewLength = Math.Clamp(filterOptions?.MaxPreviewLength ?? 200, 50, 2000);
+            result.Metadata["PayloadPreview"] = TruncateString(text, previewLength);
 
             // Look for URLs
             var urls = UrlRegex.Matches(text).Cast<Match>().Select(m => m.Value).Distinct().Take(10).ToList();
@@ -128,6 +144,12 @@ public static class PayloadAnalyzer
 
             // Analyze text characteristics
             AnalyzeTextCharacteristics(text, result);
+
+            // Apply payload filtering rules after text analysis so metadata contains context.
+            if (filterOptions?.Enabled == true)
+            {
+                ApplyPayloadFilters(text, filterOptions, result);
+            }
         }
         catch (Exception ex)
         {
@@ -475,5 +497,53 @@ public static class PayloadAnalyzer
             return input;
             
         return input.Substring(0, maxLength) + "...";
+    }
+
+    private static void ApplyPayloadFilters(string payloadText, PayloadFilterOptions options, ProtocolAnalysisResult result)
+    {
+        var comparison = options.CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+        var blockedKeywordHits = options.BlockedKeywords
+            .Where(k => !string.IsNullOrWhiteSpace(k) && payloadText.Contains(k, comparison))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var requiredKeywordHits = options.RequiredKeywords
+            .Where(k => !string.IsNullOrWhiteSpace(k) && payloadText.Contains(k, comparison))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var regexOptions = options.CaseSensitive ? RegexOptions.Compiled : RegexOptions.Compiled | RegexOptions.IgnoreCase;
+        var blockedPatternHits = new List<string>();
+        foreach (var pattern in options.BlockedRegexPatterns.Where(p => !string.IsNullOrWhiteSpace(p)).Distinct())
+        {
+            try
+            {
+                if (Regex.IsMatch(payloadText, pattern, regexOptions))
+                {
+                    blockedPatternHits.Add(pattern);
+                }
+            }
+            catch
+            {
+                // Ignore invalid patterns to avoid breaking packet processing.
+            }
+        }
+
+        var blocked = blockedKeywordHits.Any() || blockedPatternHits.Any();
+        result.Metadata["PayloadFilterBlocked"] = blocked;
+        result.Metadata["PayloadFilterBlockedKeywords"] = blockedKeywordHits;
+        result.Metadata["PayloadFilterRequiredKeywordHits"] = requiredKeywordHits;
+        result.Metadata["PayloadFilterBlockedPatterns"] = blockedPatternHits;
+
+        if (blocked)
+        {
+            result.RiskScore += 30;
+            result.SecurityFlags.Add("Payload matched blocked filter rules");
+        }
+
+        if (options.RequiredKeywords.Any() && !requiredKeywordHits.Any())
+        {
+            result.SecurityFlags.Add("Payload did not match required filter keywords");
+        }
     }
 }
