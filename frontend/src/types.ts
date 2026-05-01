@@ -101,11 +101,62 @@ export type PacketStatistics = {
   mediumRiskPackets: number;
   lowRiskPackets: number;
   protocolCounts: Record<string, number>;
+  applicationProtocolCounts: Record<string, number>;
+  trafficClassificationCounts: Record<string, number>;
   averageRiskScore: number;
+  protocolDiversityEntropy: number;
   bandwidth: BandwidthUtilizationMetrics;
   performance: NetworkPerformanceMetrics;
+  baseline: BaselineSnapshot;
+  patternAnalytics: TrafficPatternAnalytics;
+  anomalyReport: TrafficAnomalyReport;
   deviceFingerprints: DeviceFingerprint[];
   topologyMap: NetworkTopologyMap;
+};
+
+export type BaselineMetric = {
+  name: string;
+  mean: number;
+  standardDeviation: number;
+  samples: number;
+};
+
+export type BaselineSnapshot = {
+  isEstablished: boolean;
+  warmupWindows: number;
+  minimumWindowsRequired: number;
+  lastUpdatedUtc: string;
+  metrics: BaselineMetric[];
+};
+
+export type TrafficPatternAnalytics = {
+  packetRatePerSecond: number;
+  bytesPerSecond: number;
+  uniqueSourceIps: number;
+  uniqueDestinationIps: number;
+  uniqueConversations: number;
+  highRiskPacketRatioPercent: number;
+  averagePacketSizeBytes: number;
+  classificationDistributionPercent: Record<string, number>;
+  applicationProtocolDistributionPercent: Record<string, number>;
+};
+
+export type TrafficAnomalyMetric = {
+  metric: string;
+  currentValue: number;
+  baselineMean: number;
+  baselineStdDev: number;
+  zScore: number;
+  severity: string;
+  direction: string;
+};
+
+export type TrafficAnomalyReport = {
+  baselineReady: boolean;
+  totalAnomalies: number;
+  overallSeverity: string;
+  generatedAtUtc: string;
+  metrics: TrafficAnomalyMetric[];
 };
 
 export type EnhancedPacket = {

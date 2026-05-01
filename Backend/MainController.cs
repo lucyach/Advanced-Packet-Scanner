@@ -99,6 +99,7 @@ public class MainController
     private static Dictionary<string, long> bytesBySourceIp = new(StringComparer.OrdinalIgnoreCase);
     private static Dictionary<string, DateTime> pendingTcpSyn = new(StringComparer.OrdinalIgnoreCase);
     private static List<double> tcpHandshakeRttsMs = new();
+    private static readonly TrafficBehaviorAnalyticsEngine trafficBehaviorAnalytics = new();
     private static int icmpEchoRequests = 0;
     private static int icmpEchoReplies = 0;
     private static long totalObservedBytes = 0;
@@ -161,6 +162,7 @@ public class MainController
             bytesBySourceIp.Clear();
             pendingTcpSyn.Clear();
             tcpHandshakeRttsMs.Clear();
+            trafficBehaviorAnalytics.Reset();
             icmpEchoRequests = 0;
             icmpEchoReplies = 0;
             totalObservedBytes = 0;
@@ -396,6 +398,7 @@ public class MainController
                 };
 
                 enhancedPackets.Add(enhancedPacket);
+                trafficBehaviorAnalytics.ObservePacket(enhancedPacket, packetTimestampUtc);
 
                 // Legacy packet display for compatibility
                 var httpInfo = HandleHttp(packet);
@@ -1087,6 +1090,7 @@ public class MainController
             bytesBySourceIp.Clear();
             pendingTcpSyn.Clear();
             tcpHandshakeRttsMs.Clear();
+            trafficBehaviorAnalytics.Reset();
             icmpEchoRequests = 0;
             icmpEchoReplies = 0;
             totalObservedBytes = 0;
@@ -1208,6 +1212,13 @@ public class MainController
         var nowUtc = DateTime.UtcNow;
         statistics.Bandwidth = BuildBandwidthMetrics(nowUtc);
         statistics.Performance = BuildPerformanceMetrics();
+        var trafficSnapshot = trafficBehaviorAnalytics.BuildSnapshot(nowUtc);
+        statistics.ApplicationProtocolCounts = trafficSnapshot.ApplicationProtocolCounts;
+        statistics.TrafficClassificationCounts = trafficSnapshot.TrafficClassificationCounts;
+        statistics.ProtocolDiversityEntropy = trafficSnapshot.ProtocolDiversityEntropy;
+        statistics.Baseline = trafficSnapshot.Baseline;
+        statistics.PatternAnalytics = trafficSnapshot.PatternAnalytics;
+        statistics.AnomalyReport = trafficSnapshot.AnomalyReport;
         statistics.DeviceFingerprints = deviceFingerprints.Values
             .OrderByDescending(d => d.PacketCount)
             .Take(30)
