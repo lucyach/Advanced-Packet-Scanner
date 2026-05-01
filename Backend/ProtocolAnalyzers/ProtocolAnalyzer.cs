@@ -50,6 +50,8 @@ public static class ProtocolAnalyzer
                     result.Details = $"Unknown protocol: {ipPacket.Protocol}";
                     break;
             }
+
+            TrafficIntelligenceAnalyzer.EnrichAnalysis(packet, ipPacket, result);
         }
         catch (Exception ex)
         {

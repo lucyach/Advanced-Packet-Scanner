@@ -55,13 +55,69 @@ public class PacketStatistics
     public int MediumRiskPackets { get; set; }
     public int LowRiskPackets { get; set; }
     public Dictionary<string, int> ProtocolCounts { get; set; } = new();
+    public Dictionary<string, int> ApplicationProtocolCounts { get; set; } = new();
+    public Dictionary<string, int> TrafficClassificationCounts { get; set; } = new();
     public Dictionary<string, int> SecurityFlagCounts { get; set; } = new();
     public double AverageRiskScore { get; set; }
+    public double ProtocolDiversityEntropy { get; set; }
     public BandwidthUtilizationMetrics Bandwidth { get; set; } = new();
     public NetworkPerformanceMetrics Performance { get; set; } = new();
+    public BaselineSnapshot Baseline { get; set; } = new();
+    public TrafficPatternAnalytics PatternAnalytics { get; set; } = new();
+    public TrafficAnomalyReport AnomalyReport { get; set; } = new();
     public List<DeviceFingerprint> DeviceFingerprints { get; set; } = new();
     public NetworkTopologyMap TopologyMap { get; set; } = new();
     public DateTime LastUpdate { get; set; }
+}
+
+public class BaselineMetric
+{
+    public string Name { get; set; } = string.Empty;
+    public double Mean { get; set; }
+    public double StandardDeviation { get; set; }
+    public int Samples { get; set; }
+}
+
+public class BaselineSnapshot
+{
+    public bool IsEstablished { get; set; }
+    public int WarmupWindows { get; set; }
+    public int MinimumWindowsRequired { get; set; }
+    public DateTime LastUpdatedUtc { get; set; }
+    public List<BaselineMetric> Metrics { get; set; } = new();
+}
+
+public class TrafficPatternAnalytics
+{
+    public double PacketRatePerSecond { get; set; }
+    public double BytesPerSecond { get; set; }
+    public int UniqueSourceIps { get; set; }
+    public int UniqueDestinationIps { get; set; }
+    public int UniqueConversations { get; set; }
+    public double HighRiskPacketRatioPercent { get; set; }
+    public double AveragePacketSizeBytes { get; set; }
+    public Dictionary<string, double> ClassificationDistributionPercent { get; set; } = new();
+    public Dictionary<string, double> ApplicationProtocolDistributionPercent { get; set; } = new();
+}
+
+public class TrafficAnomalyMetric
+{
+    public string Metric { get; set; } = string.Empty;
+    public double CurrentValue { get; set; }
+    public double BaselineMean { get; set; }
+    public double BaselineStdDev { get; set; }
+    public double ZScore { get; set; }
+    public string Severity { get; set; } = "Info";
+    public string Direction { get; set; } = "Stable";
+}
+
+public class TrafficAnomalyReport
+{
+    public bool BaselineReady { get; set; }
+    public int TotalAnomalies { get; set; }
+    public string OverallSeverity { get; set; } = "None";
+    public DateTime GeneratedAtUtc { get; set; }
+    public List<TrafficAnomalyMetric> Metrics { get; set; } = new();
 }
 
 public class GeoLocationInfo

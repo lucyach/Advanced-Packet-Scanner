@@ -14,6 +14,7 @@
     <Compile Include="..\Backend\AppConfig.cs" Link="Backend\AppConfig.cs" />
     <Compile Include="..\Backend\DataModel.cs" Link="Backend\DataModel.cs" />
     <Compile Include="..\Backend\MainController.cs" Link="Backend\MainController.cs" />
+    <Compile Include="..\Backend\TrafficBehaviorAnalytics.cs" Link="Backend\TrafficBehaviorAnalytics.cs" />
     <Compile Include="..\Backend\ProtocolAnalyzers\DhcpAnalyzer.cs" Link="Backend\ProtocolAnalyzers\DhcpAnalyzer.cs" />
     <Compile Include="..\Backend\ProtocolAnalyzers\DnsAnalyzer.cs" Link="Backend\ProtocolAnalyzers\DnsAnalyzer.cs" />
     <Compile Include="..\Backend\ProtocolAnalyzers\FtpSmtpAnalyzer.cs" Link="Backend\ProtocolAnalyzers\FtpSmtpAnalyzer.cs" />
@@ -21,6 +22,7 @@
     <Compile Include="..\Backend\ProtocolAnalyzers\PayloadAnalyzer.cs" Link="Backend\ProtocolAnalyzers\PayloadAnalyzer.cs" />
     <Compile Include="..\Backend\ProtocolAnalyzers\ProtocolAnalyzer.cs" Link="Backend\ProtocolAnalyzers\ProtocolAnalyzer.cs" />
     <Compile Include="..\Backend\ProtocolAnalyzers\SslTlsAnalyzer.cs" Link="Backend\ProtocolAnalyzers\SslTlsAnalyzer.cs" />
+    <Compile Include="..\Backend\ProtocolAnalyzers\TrafficIntelligenceAnalyzer.cs" Link="Backend\ProtocolAnalyzers\TrafficIntelligenceAnalyzer.cs" />
   </ItemGroup>
 
 </Project>
