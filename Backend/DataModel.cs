@@ -23,6 +23,10 @@ public class EnhancedPacketInfo
     public DateTime Timestamp { get; set; }
     public string SourceIP { get; set; } = string.Empty;
     public string DestinationIP { get; set; } = string.Empty;
+    public string SourceHostName { get; set; } = string.Empty;
+    public string DestinationHostName { get; set; } = string.Empty;
+    public GeoLocationInfo? SourceGeoLocation { get; set; }
+    public GeoLocationInfo? DestinationGeoLocation { get; set; }
     public string Protocol { get; set; } = string.Empty;
     public int Size { get; set; }
     public string Details { get; set; } = string.Empty;
@@ -46,11 +50,108 @@ public class SecurityAlert
 public class PacketStatistics
 {
     public int TotalPackets { get; set; }
+    public long TotalBytes { get; set; }
     public int HighRiskPackets { get; set; }
     public int MediumRiskPackets { get; set; }
     public int LowRiskPackets { get; set; }
     public Dictionary<string, int> ProtocolCounts { get; set; } = new();
     public Dictionary<string, int> SecurityFlagCounts { get; set; } = new();
     public double AverageRiskScore { get; set; }
+    public BandwidthUtilizationMetrics Bandwidth { get; set; } = new();
+    public NetworkPerformanceMetrics Performance { get; set; } = new();
+    public List<DeviceFingerprint> DeviceFingerprints { get; set; } = new();
+    public NetworkTopologyMap TopologyMap { get; set; } = new();
     public DateTime LastUpdate { get; set; }
+}
+
+public class GeoLocationInfo
+{
+    public string Country { get; set; } = "Unknown";
+    public string Region { get; set; } = "Unknown";
+    public string City { get; set; } = "Unknown";
+    public string Isp { get; set; } = "Unknown";
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public bool IsPrivate { get; set; }
+    public string DisplayName =>
+        IsPrivate
+            ? "Private/Local Network"
+            : string.Join(", ", new[] { City, Region, Country }.Where(v => !string.IsNullOrWhiteSpace(v) && v != "Unknown"));
+}
+
+public class TopTalkerMetric
+{
+    public string IPAddress { get; set; } = string.Empty;
+    public string HostName { get; set; } = string.Empty;
+    public long Bytes { get; set; }
+    public double MegabitsPerSecond { get; set; }
+}
+
+public class BandwidthUtilizationMetrics
+{
+    public double CurrentMbps { get; set; }
+    public double AverageMbps { get; set; }
+    public double PeakMbps { get; set; }
+    public double PacketsPerSecond { get; set; }
+    public Dictionary<string, double> ProtocolBandwidthMbps { get; set; } = new();
+    public List<TopTalkerMetric> TopTalkers { get; set; } = new();
+}
+
+public class NetworkPerformanceMetrics
+{
+    public double AveragePacketSizeBytes { get; set; }
+    public double EstimatedJitterMs { get; set; }
+    public double AverageTcpHandshakeRttMs { get; set; }
+    public double IcmpReplyRatePercent { get; set; }
+    public long TotalObservedBytes { get; set; }
+}
+
+public class DeviceFingerprint
+{
+    public string IPAddress { get; set; } = string.Empty;
+    public string HostName { get; set; } = string.Empty;
+    public string ProbableOS { get; set; } = "Unknown";
+    public string DeviceType { get; set; } = "Unknown";
+    public string TrafficProfile { get; set; } = "Unknown";
+    public bool IsPrivate { get; set; }
+    public GeoLocationInfo? GeoLocation { get; set; }
+    public List<int> ObservedPorts { get; set; } = new();
+    public List<string> ObservedProtocols { get; set; } = new();
+    public Dictionary<string, int> ProtocolDistribution { get; set; } = new();
+    public long BytesSent { get; set; }
+    public long BytesReceived { get; set; }
+    public int PacketCount { get; set; }
+    public DateTime FirstSeen { get; set; }
+    public DateTime LastSeen { get; set; }
+}
+
+public class TopologyNodeInfo
+{
+    public string NodeId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string HostName { get; set; } = string.Empty;
+    public string DeviceType { get; set; } = "Unknown";
+    public GeoLocationInfo? GeoLocation { get; set; }
+    public int Degree { get; set; }
+    public long TotalBytes { get; set; }
+    public DateTime LastSeen { get; set; }
+}
+
+public class TopologyLinkInfo
+{
+    public string SourceNodeId { get; set; } = string.Empty;
+    public string DestinationNodeId { get; set; } = string.Empty;
+    public string DominantProtocol { get; set; } = string.Empty;
+    public int PacketCount { get; set; }
+    public long TotalBytes { get; set; }
+    public double CurrentMbps { get; set; }
+    public DateTime LastSeen { get; set; }
+}
+
+public class NetworkTopologyMap
+{
+    public List<TopologyNodeInfo> Nodes { get; set; } = new();
+    public List<TopologyLinkInfo> Links { get; set; } = new();
+    public int TotalNodes { get; set; }
+    public int TotalLinks { get; set; }
 }
