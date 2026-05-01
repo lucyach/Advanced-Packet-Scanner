@@ -216,6 +216,65 @@ body {
   min-height: 0;
 }
 
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-card {
+  border: 1px solid #3a4260;
+  border-radius: 4px;
+  padding: 9px 10px;
+  background: #1c2238;
+}
+
+.metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8ea1c7;
+  margin-bottom: 5px;
+}
+
+.metric-value {
+  color: #d6e0f2;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.metric-wrap {
+  font-weight: 500;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-height: 210px;
+  max-height: 280px;
+}
+
+.advanced-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 2px;
+}
+
+.insights-panel {
+  min-height: 0;
+}
+
+.subtle-text {
+  color: #93a3c7;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
 .packets-header {
   display: flex;
   align-items: center;
@@ -525,5 +584,16 @@ tbody td {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #4a5280;
+}
+
+@media (max-width: 1450px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+    max-height: 480px;
+  }
 }
 

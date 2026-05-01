@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import type { AlertsPayload, Config, DashboardData, Device, EnhancedPacket } from "./types";
 
-type View = "dashboard" | "alerts" | "options";
+type View = "dashboard" | "advanced" | "alerts" | "options";
 
 function protoClass(protocol: string): string {
   const p = protocol.toLowerCase();
@@ -49,6 +49,25 @@ function formatMetadata(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+function formatGeo(value?: { displayName?: string; isp?: string }): string {
+  if (!value) return "Unknown";
+  const place = value.displayName && value.displayName.length > 0 ? value.displayName : "Unknown";
+  const isp = value.isp && value.isp.length > 0 ? value.isp : "Unknown ISP";
+  return `${place} (${isp})`;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  return `${value.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
 }
 
 function App() {
@@ -173,6 +192,12 @@ function App() {
             onClick={() => setView("dashboard")}
           >
             Dashboard
+          </button>
+          <button
+            className={`nav-btn${view === "advanced" ? " active" : ""}`}
+            onClick={() => setView("advanced")}
+          >
+            Advanced
           </button>
           <button
             className={`nav-btn${view === "alerts" ? " active" : ""}`}
@@ -328,7 +353,11 @@ function App() {
                     <span><strong>Size:</strong> {modalPacket.size} bytes</span>
                     <span><strong>Source:</strong> {modalPacket.sourceIP}</span>
                     <span><strong>Destination:</strong> {modalPacket.destinationIP}</span>
+                    <span><strong>Source DNS:</strong> {modalPacket.sourceHostName || "Unresolved"}</span>
+                    <span><strong>Destination DNS:</strong> {modalPacket.destinationHostName || "Unresolved"}</span>
                   </div>
+                  <div className="packet-details-line"><strong>Source Geo:</strong> {formatGeo(modalPacket.sourceGeoLocation)}</div>
+                  <div className="packet-details-line"><strong>Destination Geo:</strong> {formatGeo(modalPacket.destinationGeoLocation)}</div>
                   <div className="packet-details-line">
                     <strong>Summary:</strong> {modalPacket.details || "No summary"}
                   </div>
@@ -342,6 +371,154 @@ function App() {
                 </div>
               </div>
             ) : null}
+          </>
+        )}
+
+        {/* ── ADVANCED ── */}
+        {view === "advanced" && (
+          <>
+            <h1 className="page-title">Advanced Analytics</h1>
+            <div className="advanced-scroll">
+              <div className="metrics-grid">
+                <div className="metric-card">
+                  <div className="metric-label">Current / Avg / Peak Bandwidth</div>
+                  <div className="metric-value">
+                    {(dashboard?.statistics?.bandwidth?.currentMbps ?? 0).toFixed(2)} /
+                    {(dashboard?.statistics?.bandwidth?.averageMbps ?? 0).toFixed(2)} /
+                    {(dashboard?.statistics?.bandwidth?.peakMbps ?? 0).toFixed(2)} Mbps
+                  </div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-label">Protocol Throughput</div>
+                  <div className="metric-value metric-wrap">
+                    {Object.entries(dashboard?.statistics?.bandwidth?.protocolBandwidthMbps ?? {})
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 4)
+                      .map(([proto, mbps]) => `${proto}: ${mbps.toFixed(2)} Mbps`)
+                      .join(" | ") || "No throughput data yet"}
+                  </div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-label">Network Jitter / TCP RTT</div>
+                  <div className="metric-value">
+                    {(dashboard?.statistics?.performance?.estimatedJitterMs ?? 0).toFixed(2)} ms /
+                    {(dashboard?.statistics?.performance?.averageTcpHandshakeRttMs ?? 0).toFixed(2)} ms
+                  </div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-label">ICMP Reply Rate / Avg Packet Size</div>
+                  <div className="metric-value">
+                    {(dashboard?.statistics?.performance?.icmpReplyRatePercent ?? 0).toFixed(1)}% /
+                    {(dashboard?.statistics?.performance?.averagePacketSizeBytes ?? 0).toFixed(1)} B
+                  </div>
+                </div>
+              </div>
+
+              <div className="insights-grid">
+                <div className="packets-panel insights-panel">
+                  <div className="packets-header">
+                    <span className="packets-title">
+                      <span className="packets-title-dot" />
+                      Top Talkers (Bandwidth Utilization)
+                    </span>
+                  </div>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Source IP</th>
+                          <th>Host</th>
+                          <th>Total Bytes</th>
+                          <th>Avg Mbps</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(dashboard?.statistics?.bandwidth?.topTalkers ?? []).map((talker) => (
+                          <tr key={talker.ipAddress}>
+                            <td className="td-mono">{talker.ipAddress}</td>
+                            <td>{talker.hostName || "Unresolved"}</td>
+                            <td>{formatBytes(talker.bytes)}</td>
+                            <td>{talker.megabitsPerSecond.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="packets-panel insights-panel">
+                  <div className="packets-header">
+                    <span className="packets-title">
+                      <span className="packets-title-dot" />
+                      Device Fingerprints
+                    </span>
+                  </div>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>IP / Host</th>
+                          <th>Type</th>
+                          <th>OS Guess</th>
+                          <th>Traffic Profile</th>
+                          <th>Ports</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(dashboard?.statistics?.deviceFingerprints ?? []).slice(0, 15).map((fp) => (
+                          <tr key={fp.ipAddress}>
+                            <td>
+                              <div className="td-mono">{fp.ipAddress}</div>
+                              <div className="subtle-text">{fp.hostName || formatGeo(fp.geoLocation)}</div>
+                            </td>
+                            <td>{fp.deviceType}</td>
+                            <td>{fp.probableOS}</td>
+                            <td>{fp.trafficProfile}</td>
+                            <td>{fp.observedPorts.slice(0, 6).join(", ") || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="packets-panel insights-panel">
+                  <div className="packets-header">
+                    <span className="packets-title">
+                      <span className="packets-title-dot" />
+                      Network Topology Links
+                    </span>
+                  </div>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Path</th>
+                          <th>Protocol</th>
+                          <th>Packets</th>
+                          <th>Bytes</th>
+                          <th>Current Mbps</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(dashboard?.statistics?.topologyMap?.links ?? []).slice(0, 20).map((link, i) => (
+                          <tr key={`${link.sourceNodeId}-${link.destinationNodeId}-${i}`}>
+                            <td className="td-mono">{link.sourceNodeId} → {link.destinationNodeId}</td>
+                            <td>{link.dominantProtocol}</td>
+                            <td>{link.packetCount}</td>
+                            <td>{formatBytes(link.totalBytes)}</td>
+                            <td>{link.currentMbps.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="packets-footer">
+                    Nodes: {dashboard?.statistics?.topologyMap?.totalNodes ?? 0} &bull; Links: {dashboard?.statistics?.topologyMap?.totalLinks ?? 0}
+                  </div>
+                </div>
+              </div>
+            </div>
           </>
         )}
 

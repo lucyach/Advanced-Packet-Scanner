@@ -13,19 +13,109 @@ export type SecurityAlert = {
   severity: number;
 };
 
+export type GeoLocationInfo = {
+  country: string;
+  region: string;
+  city: string;
+  isp: string;
+  latitude?: number;
+  longitude?: number;
+  isPrivate: boolean;
+  displayName: string;
+};
+
+export type TopTalkerMetric = {
+  ipAddress: string;
+  hostName: string;
+  bytes: number;
+  megabitsPerSecond: number;
+};
+
+export type BandwidthUtilizationMetrics = {
+  currentMbps: number;
+  averageMbps: number;
+  peakMbps: number;
+  packetsPerSecond: number;
+  protocolBandwidthMbps: Record<string, number>;
+  topTalkers: TopTalkerMetric[];
+};
+
+export type NetworkPerformanceMetrics = {
+  averagePacketSizeBytes: number;
+  estimatedJitterMs: number;
+  averageTcpHandshakeRttMs: number;
+  icmpReplyRatePercent: number;
+  totalObservedBytes: number;
+};
+
+export type DeviceFingerprint = {
+  ipAddress: string;
+  hostName: string;
+  probableOS: string;
+  deviceType: string;
+  trafficProfile: string;
+  isPrivate: boolean;
+  geoLocation?: GeoLocationInfo;
+  observedPorts: number[];
+  observedProtocols: string[];
+  protocolDistribution: Record<string, number>;
+  bytesSent: number;
+  bytesReceived: number;
+  packetCount: number;
+  firstSeen: string;
+  lastSeen: string;
+};
+
+export type TopologyNodeInfo = {
+  nodeId: string;
+  displayName: string;
+  hostName: string;
+  deviceType: string;
+  geoLocation?: GeoLocationInfo;
+  degree: number;
+  totalBytes: number;
+  lastSeen: string;
+};
+
+export type TopologyLinkInfo = {
+  sourceNodeId: string;
+  destinationNodeId: string;
+  dominantProtocol: string;
+  packetCount: number;
+  totalBytes: number;
+  currentMbps: number;
+  lastSeen: string;
+};
+
+export type NetworkTopologyMap = {
+  nodes: TopologyNodeInfo[];
+  links: TopologyLinkInfo[];
+  totalNodes: number;
+  totalLinks: number;
+};
+
 export type PacketStatistics = {
   totalPackets: number;
+  totalBytes: number;
   highRiskPackets: number;
   mediumRiskPackets: number;
   lowRiskPackets: number;
   protocolCounts: Record<string, number>;
   averageRiskScore: number;
+  bandwidth: BandwidthUtilizationMetrics;
+  performance: NetworkPerformanceMetrics;
+  deviceFingerprints: DeviceFingerprint[];
+  topologyMap: NetworkTopologyMap;
 };
 
 export type EnhancedPacket = {
   timestamp: string;
   sourceIP: string;
   destinationIP: string;
+  sourceHostName: string;
+  destinationHostName: string;
+  sourceGeoLocation?: GeoLocationInfo;
+  destinationGeoLocation?: GeoLocationInfo;
   protocol: string;
   size: number;
   details: string;
