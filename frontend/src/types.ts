@@ -189,10 +189,10 @@ export type Config = {
   maxPackets: number;
   maxAlerts: number;
   packetSaveCount: number;
-  payloadFilteringEnabled?: boolean;
-  payloadPreviewLength?: number;
-  blockedPayloadKeywords?: string[];
-  blockedPayloadPatterns?: string[];
+  payloadFilteringEnabled: boolean;
+  payloadPreviewLength: number;
+  blockedPayloadKeywords: string[];
+  blockedPayloadPatterns: string[];
 };
 
 export type DashboardFilters = {

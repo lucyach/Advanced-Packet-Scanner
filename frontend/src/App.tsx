@@ -7,6 +7,16 @@ import { DashboardView } from "./app/DashboardView";
 import { OptionsView } from "./app/OptionsView";
 import type { View } from "./app/viewTypes";
 
+function normalizeConfig(config: Config): Config {
+  return {
+    ...config,
+    payloadFilteringEnabled: config.payloadFilteringEnabled ?? true,
+    payloadPreviewLength: config.payloadPreviewLength ?? 200,
+    blockedPayloadKeywords: config.blockedPayloadKeywords ?? [],
+    blockedPayloadPatterns: config.blockedPayloadPatterns ?? [],
+  };
+}
+
 function App() {
   const [view, setView] = useState<View>("dashboard");
   const [devices, setDevices] = useState<Device[]>([]);
@@ -33,7 +43,7 @@ function App() {
       setSelectedDevice(selected ? selected.index : deviceData[0]?.index ?? -1);
       setDashboard(dashboardData);
       setAlerts(alertsData);
-      setConfig(configData);
+      setConfig(normalizeConfig(configData));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     }
@@ -105,7 +115,7 @@ function App() {
     if (!config) return;
     try {
       const updated = await api.updateConfig(config);
-      setConfig(updated);
+      setConfig(normalizeConfig(updated));
       setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save settings");
