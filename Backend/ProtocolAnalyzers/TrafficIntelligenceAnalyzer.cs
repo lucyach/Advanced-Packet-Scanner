@@ -1,13 +1,15 @@
 using System.Text;
 using PacketDotNet;
+using NetworkMonitor.Backend.ML;
 
 namespace NetworkMonitor.Backend.ProtocolAnalyzers;
 
-public sealed class TrafficClassificationResult
+public sealed record TrafficClassificationResult
 {
     public string Category { get; init; } = "Unknown";
     public double Confidence { get; init; }
     public Dictionary<string, double> Scores { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public string ClassificationMethod { get; init; } = "Heuristic"; // "ML" or "Heuristic"
 }
 
 public static class TrafficIntelligenceAnalyzer
@@ -16,18 +18,103 @@ public static class TrafficIntelligenceAnalyzer
     private static readonly HashSet<int> GamingPorts = new() { 3074, 3478, 3479, 3480, 27015, 27036, 7777, 19132, 25565 };
     private static readonly HashSet<int> StreamingPorts = new() { 1935, 554, 1755, 1936, 8554 };
 
+    // ML-based classifier (lazy initialized)
+    private static readonly Lazy<MLTrafficClassifier> _mlClassifier = new(() =>
+    {
+        var classifier = new MLTrafficClassifier();
+        classifier.LoadModel(); // Load if trained model exists
+        return classifier;
+    });
+
+    private static MLTrafficClassifier MLClassifier => _mlClassifier.Value;
+    private static bool _mlAvailable = true;
+
+    /// <summary>
+    /// Initializes the ML classifier. Should be called once during application startup.
+    /// </summary>
+    public static async Task InitializeMLClassifierAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _ = MLClassifier; // Ensure lazy initialization
+        }
+        catch
+        {
+            _mlAvailable = false;
+        }
+    }
+
+    /// <summary>
+    /// Trains the ML classifier with collected samples.
+    /// This should be called periodically or when sufficient samples are accumulated.
+    /// </summary>
+    public static async Task TrainMLClassifierAsync(MLTrainingData.TrafficDataset dataset, CancellationToken cancellationToken = default)
+    {
+        if (!_mlAvailable) return;
+
+        try
+        {
+            var metrics = await MLClassifier.TrainAsync(dataset, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ML classifier training failed: {ex.Message}");
+            _mlAvailable = false;
+        }
+    }
+
     public static void EnrichAnalysis(Packet packet, IPPacket ipPacket, ProtocolAnalysisResult result)
     {
         var applicationProtocol = DetectApplicationProtocol(packet, ipPacket, result);
         var srcPort = TryGetSourcePort(packet);
         var dstPort = TryGetDestinationPort(packet);
-        var classification = ClassifyTraffic(packet, ipPacket, applicationProtocol, srcPort, dstPort, result);
+        var appProtocolConfidence = EstimateProtocolConfidence(applicationProtocol, packet, srcPort, dstPort);
+
+        // Try ML classification first if available
+        TrafficClassificationResult classification;
+        if (_mlAvailable)
+        {
+            try
+            {
+                var features = TrafficFeatureExtractor.ExtractFeatures(packet, ipPacket, applicationProtocol, appProtocolConfidence.ToString());
+                var mlPrediction = MLClassifier.Predict(features);
+                
+                if (mlPrediction.IsConfident)
+                {
+                    // Use ML classification
+                    classification = new TrafficClassificationResult
+                    {
+                        Category = mlPrediction.PredictedClass,
+                        Confidence = mlPrediction.Confidence,
+                        Scores = mlPrediction.ClassProbabilities.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value),
+                        ClassificationMethod = "ML"
+                    };
+                }
+                else
+                {
+                    // Fall back to heuristic if confidence is low
+                    classification = ClassifyTrafficHeuristic(packet, ipPacket, applicationProtocol, srcPort, dstPort, result);
+                    classification = classification with { ClassificationMethod = "Heuristic (Low ML confidence)" };
+                }
+            }
+            catch
+            {
+                // Fall back to heuristic on ML error
+                classification = ClassifyTrafficHeuristic(packet, ipPacket, applicationProtocol, srcPort, dstPort, result);
+            }
+        }
+        else
+        {
+            // Use heuristic classification
+            classification = ClassifyTrafficHeuristic(packet, ipPacket, applicationProtocol, srcPort, dstPort, result);
+        }
 
         result.Metadata["ApplicationProtocol"] = applicationProtocol;
-        result.Metadata["ApplicationProtocolConfidence"] = EstimateProtocolConfidence(applicationProtocol, packet, srcPort, dstPort);
+        result.Metadata["ApplicationProtocolConfidence"] = appProtocolConfidence;
         result.Metadata["TrafficClass"] = classification.Category;
         result.Metadata["TrafficClassConfidence"] = Math.Round(classification.Confidence, 2);
         result.Metadata["TrafficClassScores"] = classification.Scores;
+        result.Metadata["TrafficClassificationMethod"] = classification.ClassificationMethod;
 
         if (result.Protocol.Equals("TCP", StringComparison.OrdinalIgnoreCase) ||
             result.Protocol.Equals("UDP", StringComparison.OrdinalIgnoreCase))
@@ -115,7 +202,7 @@ public static class TrafficIntelligenceAnalyzer
         };
     }
 
-    private static TrafficClassificationResult ClassifyTraffic(
+    private static TrafficClassificationResult ClassifyTrafficHeuristic(
         Packet packet,
         IPPacket ipPacket,
         string appProtocol,
@@ -239,7 +326,8 @@ public static class TrafficIntelligenceAnalyzer
             Scores = normalized
                 .OrderByDescending(kvp => kvp.Value)
                 .Take(5)
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase),
+            ClassificationMethod = "Heuristic"
         };
     }
 
